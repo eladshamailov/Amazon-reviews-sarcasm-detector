@@ -27,9 +27,9 @@ public class ManagerThread implements Runnable{
                 .withRegion("us-west-2")
                 .build();
 
-        for (int i = 0; i <list.size(); i++) {
+        for (int i = 0; i <SQSthread.messages.size(); i++) {
             int count = 0;
-            File file;
+            File file= null;
             obj= LocalApp.S3.getObject(LocalApp.bucketName, LocalApp.keys.elementAt(i));
             InputStream in = obj.getObjectContent();
             byte[] buf = new byte[1024];
