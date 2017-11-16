@@ -1,4 +1,3 @@
-
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
@@ -9,20 +8,17 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
+import com.amazonaws.services.sqs.model.DeleteMessageRequest;
 import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
-import com.amazonaws.services.sqs.model.DeleteMessageRequest;
 
-import java.io.File;
+import java.io.*;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
 import java.text.ParseException;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -50,8 +46,8 @@ public class Manager {
         List<Message> messages = Manager.sqs.receiveMessage(LocalApp.AppToManager).getMessages();
         int i=0;
         while( i < messages.size() ) {
-            files.put(messages.get(i).toString(),0);
-            i++;
+        files.put(messages.get(i).toString(),0);
+        i++;
         }
         for (int j = 0; j <files.size() ; j++) {
             //יצירת תרד חדש שמבצע הורדה מה S3 ופארס ושליחה לתור חדש.
@@ -76,9 +72,41 @@ public class Manager {
         System.out.println("===========================================");
         System.out.println("Getting Started with Amazon SQS");
         System.out.println("===========================================\n");
-        List<Message> messages = sqs.receiveMessage(LocalApp.AppToManager).getMessages();
+
 
     }
+    public static void reciveMess(){
+        sqs = AmazonSQSClientBuilder.standard()
+                .withCredentials(credentialsProvider)
+                .withRegion("us-west-2")
+                .build();
+        System.out.println("===========================================");
+        System.out.println("Getting Started with Amazon SQS");
+        System.out.println("===========================================\n");
+
+    }
+//    public static void receiveMess(Session session, MessageConsumer consumer){
+//        try {
+//            while(!isTerminate ) {
+//                System.out.println( "Waiting for messages");
+//                // Wait 1 minute for a message
+//                Message message = consumer.receive(TimeUnit.MINUTES.toMillis(1));
+//                if( message == null ) {
+//                    System.out.println( "Shutting down after 1 minute of silence" );
+//                    break;
+//                }
+//                ExampleCommon.handleMessage(message);
+//                message.acknowledge();
+//                System.out.println( "Acknowledged message " + message.getJMSMessageID() );
+//            }
+//        } catch (JMSException e) {
+//            System.err.println( "Error receiving from SQS: " + e.getMessage() );
+//            e.printStackTrace();
+//        }
+//    }
+//}
+//        ReceiveMessageResult receiveMessageResult = new ReceiveMessageResult();
+
 
     public static void deleteMess(){
         System.out.println("Deleting a message.\n");
@@ -109,9 +137,6 @@ public class Manager {
 //
 //    }
 
-    public static void downloadS3Files() {
-
-    }
 
     public static void createQueue() {
         AWSCredentialsProvider credentialsProvider =
