@@ -66,7 +66,7 @@
 //        System.out.println("===========================================");
 //        System.out.println("Getting Started with Amazon SQS");
 //        System.out.println("===========================================\n");
-//        List<Message> messages = sqs.receiveMessage(AppToManager).getMessages();
+//        List<Message> messages = sqs.receiveMessage(LocalApp.AppToManager).getMessages();
 //
 //    }
 //    public static void reciveMess(){
@@ -77,7 +77,7 @@
 //        System.out.println("===========================================");
 //        System.out.println("Getting Started with Amazon SQS");
 //        System.out.println("===========================================\n");
-//        List<Message> messages = sqs.receiveMessage(AppToManager).getMessages();
+//        List<Message> messages = sqs.receiveMessage(LocalApp.AppToManager).getMessages();
 //
 //    }
 ////    public static void receiveMess(Session session, MessageConsumer consumer){
