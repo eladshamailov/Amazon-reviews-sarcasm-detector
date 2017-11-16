@@ -42,17 +42,6 @@ public class Manager {
         initialize();
         //create the threadPool
         ExecutorService executor = Executors.newFixedThreadPool(100);
-        //create the job to execute
-        List<Message> messages = Manager.sqs.receiveMessage(LocalApp.AppToManager).getMessages();
-        int i=0;
-        while( i < messages.size() ) {
-        files.put(messages.get(i).toString(),0);
-        i++;
-        }
-        for (int j = 0; j <files.size() ; j++) {
-            //יצירת תרד חדש שמבצע הורדה מה S3 ופארס ושליחה לתור חדש.
-        }
-
 
     }
     public static void initialize() {
