@@ -7,10 +7,7 @@ import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
-import com.amazonaws.services.sqs.model.CreateQueueRequest;
-import com.amazonaws.services.sqs.model.DeleteMessageRequest;
-import com.amazonaws.services.sqs.model.Message;
-import com.amazonaws.services.sqs.model.ReceiveMessageResult;
+import com.amazonaws.services.sqs.model.*;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
@@ -43,15 +40,6 @@ public class Manager {
         //create the threadPool
         ExecutorService executor = Executors.newFixedThreadPool(100);
         //create the job to execute
-        List<Message> messages = Manager.sqs.receiveMessage(LocalApp.AppToManager).getMessages();
-        int i=0;
-        while( i < messages.size() ) {
-        files.put(messages.get(i).toString(),0);
-        i++;
-        }
-        for (int j = 0; j <files.size() ; j++) {
-            //יצירת תרד חדש שמבצע הורדה מה S3 ופארס ושליחה לתור חדש.
-        }
 
 
     }
@@ -73,75 +61,16 @@ public class Manager {
         System.out.println("Getting Started with Amazon SQS");
         System.out.println("===========================================\n");
 
-
     }
-    public static void reciveMess(){
-        sqs = AmazonSQSClientBuilder.standard()
-                .withCredentials(credentialsProvider)
-                .withRegion("us-west-2")
-                .build();
-        System.out.println("===========================================");
-        System.out.println("Getting Started with Amazon SQS");
-        System.out.println("===========================================\n");
-
-    }
-//    public static void receiveMess(Session session, MessageConsumer consumer){
-//        try {
-//            while(!isTerminate ) {
-//                System.out.println( "Waiting for messages");
-//                // Wait 1 minute for a message
-//                Message message = consumer.receive(TimeUnit.MINUTES.toMillis(1));
-//                if( message == null ) {
-//                    System.out.println( "Shutting down after 1 minute of silence" );
-//                    break;
-//                }
-//                ExampleCommon.handleMessage(message);
-//                message.acknowledge();
-//                System.out.println( "Acknowledged message " + message.getJMSMessageID() );
-//            }
-//        } catch (JMSException e) {
-//            System.err.println( "Error receiving from SQS: " + e.getMessage() );
-//            e.printStackTrace();
-//        }
-//    }
-//}
-//        ReceiveMessageResult receiveMessageResult = new ReceiveMessageResult();
-
-
     public static void deleteMess(){
         System.out.println("Deleting a message.\n");
         String messageRecieptHandle = SQSthread.messages.get(0).getReceiptHandle();
         sqs.deleteMessage(new DeleteMessageRequest(LocalApp.AppToManager, messageRecieptHandle));
     }
-//    public static void receiveMess(Session session, MessageConsumer consumer){
-//        try {
-//            while(!isTerminate ) {
-//                System.out.println( "Waiting for messages");
-//                // Wait 1 minute for a message
-//                Message message = consumer.receive(TimeUnit.MINUTES.toMillis(1));
-//                if( message == null ) {
-//                    System.out.println( "Shutting down after 1 minute of silence" );
-//                    break;
-//                }
-//                ExampleCommon.handleMessage(message);
-//                message.acknowledge();
-//                System.out.println( "Acknowledged message " + message.getJMSMessageID() );
-//            }
-//        } catch (JMSException e) {
-//            System.err.println( "Error receiving from SQS: " + e.getMessage() );
-//            e.printStackTrace();
-//        }
-//    }
-//}
-//        ReceiveMessageResult receiveMessageResult = new ReceiveMessageResult();
-//
-//    }
-
-
     public static void createQueue() {
-        AWSCredentialsProvider credentialsProvider =
+        credentialsProvider =
                 new AWSStaticCredentialsProvider(new ProfileCredentialsProvider().getCredentials());
-        AmazonSQS sqs = AmazonSQSClientBuilder.standard()
+        sqs = AmazonSQSClientBuilder.standard()
                 .withCredentials(credentialsProvider)
                 .withRegion("us-west-2")
                 .build();
@@ -167,14 +96,27 @@ public class Manager {
 
 
     public static void parse(File file) throws IOException, ParseException, org.json.simple.parser.ParseException {
-        //תקשורת עם התורים שיצרנו לעובדים
+        credentialsProvider =
+                new AWSStaticCredentialsProvider(new ProfileCredentialsProvider().getCredentials());
+        sqs = AmazonSQSClientBuilder.standard()
+                .withCredentials(credentialsProvider)
+                .withRegion("us-west-2")
+                .build();
+        System.out.println("===========================================");
+        System.out.println("Getting Started with Amazon SQS");
+        System.out.println("===========================================\n");
         JSONParser parser = new JSONParser();
         JSONObject json;
         BufferedReader reader = new BufferedReader(new FileReader(file));
         String line = reader.readLine();
+        int i=0;
         while (line != null) {
             json = (JSONObject) parser.parse(line);
-            //הכנסת הגיסון כהודעה לתוך התור
+            sqs.sendMessage(new SendMessageRequest(MangerToWorker,json.toString()));
+            //יש ליצור עובד חדש
+            int x=files.get(SQSthread.messages.get(i));
+            files.replace(SQSthread.messages.get(i).toString(),x,x++);
+            i++;
             try {
                 line = reader.readLine();
             } catch (IOException e) {
@@ -186,15 +128,3 @@ public class Manager {
         reader.close();
     }
 }
-//    public void addTask(JSONObject obj){
-//
-//    }
-//}
-////    public void addTask(JSONObject obj){
-////
-////    }
-////
-////    public static void main (String [] args) throws IOException, ParseException {
-////        parse();
-////    }
-////}
