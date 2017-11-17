@@ -49,10 +49,10 @@ public class Manager {
             System.out.println("waiting");
         }
         System.out.println("the thread"+Thread.currentThread().getName());
-//        for (int i = 0; i < SQSthread.messages.size(); i++) {
-//            Runnable manager=new ManagerThread();
-//            executor.execute(manager);
-//        }
+        for (int i = 0; i < SQSthread.messages.size(); i++) {
+            Runnable manager=new ManagerThread();
+            executor.execute(manager);
+        }
         executor.shutdown();
         while (!executor.isTerminated()) {
         }
@@ -128,36 +128,36 @@ public class Manager {
     }
 
 
-//    public static void parse(File file) throws IOException, ParseException, org.json.simple.parser.ParseException {
-//        credentialsProvider =
-//                new AWSStaticCredentialsProvider(new ProfileCredentialsProvider().getCredentials());
-//        sqs = AmazonSQSClientBuilder.standard()
-//                .withCredentials(credentialsProvider)
-//                .withRegion("us-west-2")
-//                .build();
-//        System.out.println("===========================================");
-//        System.out.println("Getting Started with Amazon SQS");
-//        System.out.println("===========================================\n");
-//        JSONParser parser = new JSONParser();
-//        JSONObject json;
-//        BufferedReader reader = new BufferedReader(new FileReader(file));
-//        String line = reader.readLine();
-//        int i=0;
-//        while (line != null) {
-//            json = (JSONObject) parser.parse(line);
-//            sqs.sendMessage(new SendMessageRequest(MangerToWorker,json.toString()));
-//            //יש ליצור עובד חדש
-//            int x=files.get(SQSthread.messages.get(i));
-//            files.replace(SQSthread.messages.get(i).toString(),x,x++);
-//            i++;
-//            try {
-//                line = reader.readLine();
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-//
-//            System.out.println(json.toJSONString());
-//        }
-//        reader.close();
-//    }
+    public static void parse(File file) throws IOException, ParseException, org.json.simple.parser.ParseException {
+        credentialsProvider =
+                new AWSStaticCredentialsProvider(new ProfileCredentialsProvider().getCredentials());
+        sqs = AmazonSQSClientBuilder.standard()
+                .withCredentials(credentialsProvider)
+                .withRegion("us-west-2")
+                .build();
+        System.out.println("===========================================");
+        System.out.println("Getting Started with Amazon SQS");
+        System.out.println("===========================================\n");
+        JSONParser parser = new JSONParser();
+        JSONObject json;
+        BufferedReader reader = new BufferedReader(new FileReader(file));
+        String line = reader.readLine();
+        int i=0;
+        while (line != null) {
+            json = (JSONObject) parser.parse(line);
+            sqs.sendMessage(new SendMessageRequest(MangerToWorker,json.toString()));
+            //יש ליצור עובד חדש
+            int x=files.get(SQSthread.messages.peek());
+            files.replace(SQSthread.messages.poll().toString(),x,x++);
+            i++;
+            try {
+                line = reader.readLine();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            System.out.println(json.toJSONString());
+        }
+        reader.close();
+    }
 }
