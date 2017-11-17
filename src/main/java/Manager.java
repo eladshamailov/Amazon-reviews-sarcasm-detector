@@ -42,10 +42,11 @@ public class Manager {
         //create the job to execute
         Runnable sqsthread = new SQSthread();
         System.out.println("the Thread:"+Thread.currentThread().getName());
+
         executor.execute(sqsthread);
 
         System.out.println("the Thread:"+Thread.currentThread().getName());
-        System.out.println("before Join");
+
 //        Thread.currentThread().join();
 //        Thread.currentThread().interrupt();
         System.out.println("after Join");
@@ -53,6 +54,7 @@ public class Manager {
             Thread.currentThread().sleep(10000);
             System.out.println("waiting");
         }
+        System.out.println("the thread"+Thread.currentThread().getName());
         if (SQSthread.count.get()>0){
             deleteMess();
         }
@@ -62,6 +64,14 @@ public class Manager {
 //        }
         executor.shutdown();
         while (!executor.isTerminated()) {
+        }
+    }
+    public static void  add(Message m) {
+        SQSthread.messages.add(m);
+        SQSthread.count.getAndIncrement();
+        System.out.println("counter is: "+SQSthread.count);
+        synchronized (SQSthread.messages) {
+            SQSthread.messages.notifyAll();
         }
     }
 
