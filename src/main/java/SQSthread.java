@@ -36,8 +36,8 @@ public class SQSthread implements Runnable{
                 .build();
 
         System.out.println("Listing all queues in your account.\n");
-        URLlist=Manager.sqs.listQueues().getQueueUrls();
-        for (String queueUrl :URLlist ) {
+        URLlist = Manager.sqs.listQueues().getQueueUrls();
+        for (String queueUrl : URLlist) {
             System.out.println("  QueueUrl: " + queueUrl);
             System.out.println();
             // Receive messages
@@ -45,12 +45,12 @@ public class SQSthread implements Runnable{
                 System.out.println("Receiving messages from AppToManager.\n");
                 ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(queueUrl);
                 List<Message> tmp = Manager.sqs.receiveMessage(receiveMessageRequest).getMessages();
-                int k=0;
+                int k = 0;
                 for (Message m : tmp) {
-                    add(m);
+                    Manager.add(m);
                     tmp.remove(k);
                     k++;
-                    if(tmp.size()==0){
+                    if (tmp.size() == 0) {
                         break;
                     }
                 }
@@ -67,31 +67,23 @@ public class SQSthread implements Runnable{
                     }
                 }
                 System.out.println();
-            if(tmp.size()==0){
-                shutdown();
-            }
-            }
-            try {
-                System.out.println("the Thread in SqS:"+Thread.currentThread().getName());
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+                if (tmp.size() == 0) {
+                    try {
+                        System.out.println("the Thread that is waiting:" + Thread.currentThread().getName());
+                        synchronized (messages){
+                            messages.wait();
+                        }
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                System.out.println("end function");
+                doWork.set(true);
+
             }
         }
-        System.out.println("end function");
-        Thread.currentThread().interrupt();
-        System.out.println("end function");
-        doWork.set(true);
-
     }
 
 
-    public static void  add(Message m) {
-        messages.add(m);
-        count.getAndIncrement();
-        System.out.println("counter is: "+count);
-        synchronized (messages) {
-            messages.notifyAll();
-        }
-    }
+
 }
