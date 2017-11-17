@@ -50,10 +50,10 @@ public class Manager {
 //        Thread.currentThread().join();
 //        Thread.currentThread().interrupt();
         System.out.println("after Join");
-        while (!SQSthread.doWork.get()){
-            Thread.currentThread().sleep(10000);
-            System.out.println("waiting");
-        }
+//        while (!SQSthread.doWork.get()){
+//            Thread.currentThread().sleep(1000);
+//            System.out.println("waiting");
+//        }
         System.out.println("the thread"+Thread.currentThread().getName());
         if (SQSthread.count.get()>0){
             deleteMess();
@@ -62,9 +62,9 @@ public class Manager {
 //            Runnable manager=new ManagerThread();
 //            executor.execute(manager);
 //        }
-        executor.shutdown();
-        while (!executor.isTerminated()) {
-        }
+        //executor.shutdown();
+        //while (!executor.isTerminated()) {
+        //}
     }
     public static void  add(Message m) {
         SQSthread.messages.add(m);
@@ -101,8 +101,9 @@ public class Manager {
                 .withRegion("us-west-2")
                 .build();
         System.out.println("Deleting a message.\n");
-        String messageRecieptHandle = SQSthread.messages.poll().getReceiptHandle();
+        String messageRecieptHandle = SQSthread.messages.peek().getReceiptHandle();
         sqs.deleteMessage(new DeleteMessageRequest(SQSthread.URLlist.get(0), messageRecieptHandle));
+        SQSthread.doWork.set(false);
     }
 
     public static void createQueue() {

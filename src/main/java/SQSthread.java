@@ -43,17 +43,14 @@ public class SQSthread implements Runnable{
             // Receive messages
             while (run) {
                 System.out.println("Receiving messages from AppToManager.\n");
-                ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(queueUrl);
+                ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(10);
                 List<Message> tmp = Manager.sqs.receiveMessage(receiveMessageRequest).getMessages();
-                int k = 0;
-                for (Message m : tmp) {
-                    Manager.add(m);
-                    tmp.remove(k);
-                    k++;
-                    if (tmp.size() == 0) {
-                        break;
+                    for (Message m : tmp) {
+                        Manager.add(m);
                     }
-                }
+                    for (Message m:tmp){
+                        Manager.sqs.deleteMessage(new DeleteMessageRequest(queueUrl,m.getReceiptHandle()));
+                    }
                 for (Message message : messages) {
                     System.out.println("  Message");
                     System.out.println("    MessageId:     " + message.getMessageId());
@@ -67,7 +64,10 @@ public class SQSthread implements Runnable{
                     }
                 }
                 System.out.println();
-                if (tmp.size() == 0) {
+                if(messages.size()>0){
+                    doWork.set(true);
+                }
+                if (tmp.size()==0) {
                     try {
                         System.out.println("the Thread that is waiting:" + Thread.currentThread().getName());
                         synchronized (messages){
@@ -78,7 +78,7 @@ public class SQSthread implements Runnable{
                     }
                 }
                 System.out.println("end function");
-                doWork.set(true);
+                //doWork.set(true);
 
             }
         }
