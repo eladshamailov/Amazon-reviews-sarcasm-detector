@@ -45,6 +45,7 @@ public class SQSthread implements Runnable{
                 System.out.println("Receiving messages from AppToManager.\n");
                 ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(queueUrl);
                 List<Message> tmp = Manager.sqs.receiveMessage(receiveMessageRequest).getMessages();
+
                 int k=0;
                 for (Message m : tmp) {
                     add(m);
@@ -79,9 +80,9 @@ public class SQSthread implements Runnable{
             }
         }
         System.out.println("end function");
-        Thread.currentThread().interrupt();
         System.out.println("end function");
         doWork.set(true);
+
 
     }
 
