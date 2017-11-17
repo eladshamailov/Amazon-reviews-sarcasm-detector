@@ -30,7 +30,7 @@ public class ManagerThread implements Runnable{
         for (int i = 0; i <SQSthread.messages.size(); i++) {
             int count = 0;
             File file= null;
-            obj= Manager.S3.getObject(LocalApp.bucketName, LocalApp.keys.elementAt(i));
+            obj= Manager.S3.getObject(Manager.S3.listBuckets().get(0).getName(), LocalApp.keys.elementAt(i));
             InputStream in = obj.getObjectContent();
             byte[] buf = new byte[1024];
             OutputStream out = null;
