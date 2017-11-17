@@ -42,8 +42,10 @@ public class Manager {
         //create the job to execute
             Runnable sqsthread = new SQSthread();
             executor.execute(sqsthread);
-            deleteMess();
 
+        if (SQSthread.count.get()>0){
+            deleteMess();
+        }
 //        for (int i = 0; i < SQSthread.messages.size(); i++) {
 //            Runnable manager=new ManagerThread();
 //            executor.execute(manager);
@@ -74,9 +76,13 @@ public class Manager {
     }
 
     public static void deleteMess(){
+        sqs = AmazonSQSClientBuilder.standard()
+                .withCredentials(Manager.credentialsProvider)
+                .withRegion("us-west-2")
+                .build();
         System.out.println("Deleting a message.\n");
         String messageRecieptHandle = SQSthread.messages.poll().getReceiptHandle();
-        sqs.deleteMessage(new DeleteMessageRequest(LocalApp.AppToManager, messageRecieptHandle));
+        sqs.deleteMessage(new DeleteMessageRequest(SQSthread.URLlist.get(0), messageRecieptHandle));
     }
 
     public static void createQueue() {

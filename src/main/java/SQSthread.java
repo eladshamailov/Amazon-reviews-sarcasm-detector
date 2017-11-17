@@ -1,10 +1,12 @@
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 
+import com.amazonaws.services.sqs.model.DeleteMessageRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.Message;
@@ -12,9 +14,10 @@ import com.amazonaws.services.sqs.model.Message;
 
 
 public class SQSthread implements Runnable{
-
+    public static List<String> URLlist;
     public static ConcurrentLinkedQueue<Message> messages=new ConcurrentLinkedQueue<>();
     private boolean run=true;
+    static AtomicInteger count=new AtomicInteger(0);
     public void shutdown(){
         run=false;
     }
@@ -29,7 +32,8 @@ public class SQSthread implements Runnable{
                 .build();
 
         System.out.println("Listing all queues in your account.\n");
-        for (String queueUrl : Manager.sqs.listQueues().getQueueUrls()) {
+        URLlist=Manager.sqs.listQueues().getQueueUrls();
+        for (String queueUrl :URLlist ) {
             System.out.println("  QueueUrl: " + queueUrl);
             System.out.println();
             // Receive messages
@@ -37,8 +41,14 @@ public class SQSthread implements Runnable{
                 System.out.println("Receiving messages from AppToManager.\n");
                 ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(queueUrl);
                 List<Message> tmp = Manager.sqs.receiveMessage(receiveMessageRequest).getMessages();
+                int k=0;
                 for (Message m : tmp) {
                     add(m);
+                    tmp.remove(k);
+                    k++;
+                    if(tmp.size()==0){
+                        break;
+                    }
                 }
                 for (Message message : messages) {
                     System.out.println("  Message");
@@ -53,11 +63,23 @@ public class SQSthread implements Runnable{
                     }
                 }
                 System.out.println();
+            if(tmp.size()==0){
+                shutdown();
+            }
+            }
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
+
     }
+
+
     public static void  add(Message m) {
         messages.add(m);
+        count.getAndIncrement();
         synchronized (messages) {
             messages.notifyAll();
         }
