@@ -74,6 +74,10 @@ public class Manager {
     }
 
     public static void deleteMess(){
+        sqs = AmazonSQSClientBuilder.standard()
+                .withCredentials(credentialsProvider)
+                .withRegion("us-west-2")
+                .build();
         System.out.println("Deleting a message.\n");
         String messageRecieptHandle = SQSthread.messages.poll().getReceiptHandle();
         sqs.deleteMessage(new DeleteMessageRequest(LocalApp.AppToManager, messageRecieptHandle));
