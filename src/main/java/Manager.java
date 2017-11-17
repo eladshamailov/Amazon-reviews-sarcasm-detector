@@ -35,14 +35,17 @@ public class Manager {
     static ExecutorService executorService;
     public static boolean isTerminate=false;
 
-    public static void main(String[] args)  {
+    public static void main(String[] args) throws InterruptedException {
         initialize();
         //create the threadPool
         ExecutorService executor = Executors.newFixedThreadPool(100);
         //create the job to execute
-            Runnable sqsthread = new SQSthread();
-            executor.execute(sqsthread);
+        Runnable sqsthread = new SQSthread();
+        System.out.println("the Thread:"+Thread.currentThread().getName());
+        executor.execute(sqsthread);
 
+        System.out.println("the Thread:"+Thread.currentThread().getName());
+        Thread.currentThread().join();
         if (SQSthread.count.get()>0){
             deleteMess();
         }

@@ -24,6 +24,7 @@ public class SQSthread implements Runnable{
 
     @Override
     public void run() {
+        System.out.println("In run");
         Manager.credentialsProvider = new AWSStaticCredentialsProvider
                 (new ProfileCredentialsProvider().getCredentials());
         Manager.sqs = AmazonSQSClientBuilder.standard()
@@ -68,6 +69,7 @@ public class SQSthread implements Runnable{
             }
             }
             try {
+                System.out.println("the Thread in SqS:"+Thread.currentThread().getName());
                 Thread.sleep(100);
             } catch (InterruptedException e) {
                 e.printStackTrace();
