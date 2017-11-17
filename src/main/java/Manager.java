@@ -155,7 +155,6 @@ public class Manager {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
             System.out.println(json.toJSONString());
         }
         reader.close();
