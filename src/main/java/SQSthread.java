@@ -45,45 +45,50 @@ public class SQSthread implements Runnable{
                 System.out.println("Receiving messages from AppToManager.\n");
                 ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(queueUrl);
                 List<Message> tmp = Manager.sqs.receiveMessage(receiveMessageRequest).getMessages();
-                int k = 0;
-                for (Message m : tmp) {
-                    Manager.add(m);
-                    tmp.remove(k);
-                    k++;
-                    if (tmp.size() == 0) {
-                        break;
-                    }
-                }
-                for (Message message : messages) {
-                    System.out.println("  Message");
-                    System.out.println("    MessageId:     " + message.getMessageId());
-                    System.out.println("    ReceiptHandle: " + message.getReceiptHandle());
-                    System.out.println("    MD5OfBody:     " + message.getMD5OfBody());
-                    System.out.println("    Body:          " + message.getBody());
-                    for (Entry<String, String> entry : message.getAttributes().entrySet()) {
-                        System.out.println("  Attribute");
-                        System.out.println("    Name:  " + entry.getKey());
-                        System.out.println("    Value: " + entry.getValue());
-                    }
-                }
-                System.out.println();
-                if (tmp.size() == 0) {
-                    try {
-                        System.out.println("the Thread that is waiting:" + Thread.currentThread().getName());
-                        synchronized (messages){
-                            messages.wait();
+                while (tmp.size() >0) {
+                    int k = 0;
+                    for (Message m : tmp) {
+                        Manager.add(m);
+                        tmp.remove(k);
+                        k++;
+                        if (tmp.size() == 0) {
+                            break;
                         }
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
                     }
+                        tmp = Manager.sqs.receiveMessage(receiveMessageRequest).getMessages();
+                    System.out.println("got here");
                 }
-                System.out.println("end function");
-                doWork.set(true);
+                    for (Message message : messages) {
+                        System.out.println("  Message");
+                        System.out.println("    MessageId:     " + message.getMessageId());
+                        System.out.println("    ReceiptHandle: " + message.getReceiptHandle());
+                        System.out.println("    MD5OfBody:     " + message.getMD5OfBody());
+                        System.out.println("    Body:          " + message.getBody());
+                        for (Entry<String, String> entry : message.getAttributes().entrySet()) {
+                            System.out.println("  Attribute");
+                            System.out.println("    Name:  " + entry.getKey());
+                            System.out.println("    Value: " + entry.getValue());
+                        }
+                    }
+                    System.out.println();
+                    if (messages.size() > 0) {
+                        System.out.println("end function");
+                        doWork.set(true);
+                    }
+                    if (tmp.size() == 0) {
+                        try {
+                            System.out.println("the Thread that is waiting:" + Thread.currentThread().getName());
+                            synchronized (messages) {
+                                messages.wait();
+                            }
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
 
+                }
             }
         }
+
+
     }
-
-
-
-}
