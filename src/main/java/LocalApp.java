@@ -197,6 +197,7 @@ public class LocalApp {
             sqs.sendMessage(new SendMessageRequest(AppToManager, S3.getUrl(bucketName,keys.elementAt(i)).toString()));
         }
     }
+
 }
 
 

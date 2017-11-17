@@ -40,9 +40,19 @@ public class Manager {
         //create the threadPool
         ExecutorService executor = Executors.newFixedThreadPool(100);
         //create the job to execute
+            Runnable sqsthread = new SQSthread();
+            executor.execute(sqsthread);
+            deleteMess();
 
-
+//        for (int i = 0; i < SQSthread.messages.size(); i++) {
+//            Runnable manager=new ManagerThread();
+//            executor.execute(manager);
+//        }
+        executor.shutdown();
+        while (!executor.isTerminated()) {
+        }
     }
+
     public static void initialize() {
         credentialsProvider = new AWSStaticCredentialsProvider
                 (new ProfileCredentialsProvider().getCredentials());
@@ -62,11 +72,13 @@ public class Manager {
         System.out.println("===========================================\n");
 
     }
+
     public static void deleteMess(){
         System.out.println("Deleting a message.\n");
-        String messageRecieptHandle = SQSthread.messages.get(0).getReceiptHandle();
+        String messageRecieptHandle = SQSthread.messages.poll().getReceiptHandle();
         sqs.deleteMessage(new DeleteMessageRequest(LocalApp.AppToManager, messageRecieptHandle));
     }
+
     public static void createQueue() {
         credentialsProvider =
                 new AWSStaticCredentialsProvider(new ProfileCredentialsProvider().getCredentials());
@@ -95,36 +107,36 @@ public class Manager {
     }
 
 
-    public static void parse(File file) throws IOException, ParseException, org.json.simple.parser.ParseException {
-        credentialsProvider =
-                new AWSStaticCredentialsProvider(new ProfileCredentialsProvider().getCredentials());
-        sqs = AmazonSQSClientBuilder.standard()
-                .withCredentials(credentialsProvider)
-                .withRegion("us-west-2")
-                .build();
-        System.out.println("===========================================");
-        System.out.println("Getting Started with Amazon SQS");
-        System.out.println("===========================================\n");
-        JSONParser parser = new JSONParser();
-        JSONObject json;
-        BufferedReader reader = new BufferedReader(new FileReader(file));
-        String line = reader.readLine();
-        int i=0;
-        while (line != null) {
-            json = (JSONObject) parser.parse(line);
-            sqs.sendMessage(new SendMessageRequest(MangerToWorker,json.toString()));
-            //יש ליצור עובד חדש
-            int x=files.get(SQSthread.messages.get(i));
-            files.replace(SQSthread.messages.get(i).toString(),x,x++);
-            i++;
-            try {
-                line = reader.readLine();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            System.out.println(json.toJSONString());
-        }
-        reader.close();
-    }
+//    public static void parse(File file) throws IOException, ParseException, org.json.simple.parser.ParseException {
+//        credentialsProvider =
+//                new AWSStaticCredentialsProvider(new ProfileCredentialsProvider().getCredentials());
+//        sqs = AmazonSQSClientBuilder.standard()
+//                .withCredentials(credentialsProvider)
+//                .withRegion("us-west-2")
+//                .build();
+//        System.out.println("===========================================");
+//        System.out.println("Getting Started with Amazon SQS");
+//        System.out.println("===========================================\n");
+//        JSONParser parser = new JSONParser();
+//        JSONObject json;
+//        BufferedReader reader = new BufferedReader(new FileReader(file));
+//        String line = reader.readLine();
+//        int i=0;
+//        while (line != null) {
+//            json = (JSONObject) parser.parse(line);
+//            sqs.sendMessage(new SendMessageRequest(MangerToWorker,json.toString()));
+//            //יש ליצור עובד חדש
+//            int x=files.get(SQSthread.messages.get(i));
+//            files.replace(SQSthread.messages.get(i).toString(),x,x++);
+//            i++;
+//            try {
+//                line = reader.readLine();
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//
+//            System.out.println(json.toJSONString());
+//        }
+//        reader.close();
+//    }
 }
