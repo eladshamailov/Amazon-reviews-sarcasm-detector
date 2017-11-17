@@ -45,7 +45,14 @@ public class Manager {
         executor.execute(sqsthread);
 
         System.out.println("the Thread:"+Thread.currentThread().getName());
-        Thread.currentThread().join();
+        System.out.println("before Join");
+//        Thread.currentThread().join();
+//        Thread.currentThread().interrupt();
+        System.out.println("after Join");
+        while (!SQSthread.doWork.get()){
+            Thread.currentThread().sleep(10000);
+            System.out.println("waiting");
+        }
         if (SQSthread.count.get()>0){
             deleteMess();
         }

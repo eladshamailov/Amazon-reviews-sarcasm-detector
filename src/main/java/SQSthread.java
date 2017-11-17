@@ -6,6 +6,7 @@ import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
@@ -17,7 +18,9 @@ public class SQSthread implements Runnable{
     public static List<String> URLlist;
     public static ConcurrentLinkedQueue<Message> messages=new ConcurrentLinkedQueue<>();
     private boolean run=true;
-    static AtomicInteger count=new AtomicInteger(0);
+    public static AtomicInteger count=new AtomicInteger(0);
+    public static AtomicBoolean doWork=new AtomicBoolean(false);
+
     public void shutdown(){
         run=false;
     }
@@ -75,6 +78,10 @@ public class SQSthread implements Runnable{
                 e.printStackTrace();
             }
         }
+        System.out.println("end function");
+        Thread.currentThread().interrupt();
+        System.out.println("end function");
+        doWork.set(true);
 
     }
 
@@ -82,6 +89,7 @@ public class SQSthread implements Runnable{
     public static void  add(Message m) {
         messages.add(m);
         count.getAndIncrement();
+        System.out.println("counter is: "+count);
         synchronized (messages) {
             messages.notifyAll();
         }
