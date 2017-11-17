@@ -159,7 +159,7 @@ public class LocalApp {
 
     public static void createQueue() {
 
-         credentialsProvider =
+        credentialsProvider =
                 new AWSStaticCredentialsProvider(new ProfileCredentialsProvider().getCredentials());
         AmazonSQS sqs = AmazonSQSClientBuilder.standard()
                 .withCredentials(credentialsProvider)
