@@ -42,7 +42,7 @@ public class Manager {
         //create the job to execute
             Runnable sqsthread = new SQSthread();
             executor.execute(sqsthread);
-            deleteMess();
+//            deleteMess();
 
 //        for (int i = 0; i < SQSthread.messages.size(); i++) {
 //            Runnable manager=new ManagerThread();
