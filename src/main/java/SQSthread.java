@@ -68,14 +68,14 @@ public class SQSthread implements Runnable{
                 shutdown();
             }
             }
-            try {
-                System.out.println("the Thread in SqS:"+Thread.currentThread().getName());
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
         }
-
+        System.out.println("finish");
+//        try {
+//                System.out.println("the Thread in SqS:"+Thread.currentThread().getName());
+//                Thread.sleep(1);
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
     }
 
 

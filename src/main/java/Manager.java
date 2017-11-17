@@ -41,14 +41,17 @@ public class Manager {
         ExecutorService executor = Executors.newFixedThreadPool(100);
         //create the job to execute
         Runnable sqsthread = new SQSthread();
-        System.out.println("the Thread:"+Thread.currentThread().getName());
+        System.out.println("the Thread1:"+Thread.currentThread().getName());
         executor.execute(sqsthread);
-
-        System.out.println("the Thread:"+Thread.currentThread().getName());
+        System.out.println("the Thread2:"+Thread.currentThread().getName());
         Thread.currentThread().join();
+        System.out.println("the Thread3:"+Thread.currentThread().getName());
+
         if (SQSthread.count.get()>0){
             deleteMess();
         }
+        System.out.println("the Thread4:"+Thread.currentThread().getName());
+
 //        for (int i = 0; i < SQSthread.messages.size(); i++) {
 //            Runnable manager=new ManagerThread();
 //            executor.execute(manager);
