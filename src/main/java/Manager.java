@@ -46,7 +46,7 @@ public class Manager {
         executor.execute(sqsthread);
         System.out.println("the Thread:"+Thread.currentThread().getName());
         while (!SQSthread.doWork.get()){
-            Thread.currentThread().sleep(10000);
+            Thread.currentThread().sleep(2000);
             System.out.println("waiting");
         }
         System.out.println("the thread: "+Thread.currentThread().getName());
@@ -54,7 +54,7 @@ public class Manager {
             Runnable manager=new ManagerThread();
             executor.execute(manager);
             while (!ManagerThread.doWork.get()){
-                Thread.currentThread().sleep(10000);
+                Thread.currentThread().sleep(2000);
                 System.out.println("waiting");
             }
         }
@@ -107,7 +107,7 @@ public class Manager {
     public static void  add(Message m) {
         SQSthread.messages.add(m);
         SQSthread.count.getAndIncrement();
-        files.put(m.getBody().toString(),0);
+        files.put(m.toString(),0);
         System.out.println("counter is: "+SQSthread.count);
         synchronized (SQSthread.messages) {
             SQSthread.messages.notifyAll();
@@ -144,13 +144,13 @@ public class Manager {
         BufferedReader reader = new BufferedReader(new FileReader(file));
         String line = reader.readLine();
         int i=0;
+        int x=files.get(SQSthread.messages.peek().toString());
         while (line != null) {
             json = (JSONObject) parser.parse(line);
             //upload the msg to the MangerToWorker Queue
             sqs.sendMessage(new SendMessageRequest(MangerToWorker,json.toString()));
-            //יש ליצור עובד חדש
-            int x=files.get(SQSthread.messages.peek());
-            files.replace(SQSthread.messages.poll().toString(),x,x++);
+            //
+            files.replace(SQSthread.messages.peek().toString(),x,x++);
             i++;
             try {
                 line = reader.readLine();
