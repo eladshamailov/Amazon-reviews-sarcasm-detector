@@ -62,6 +62,7 @@ public class LocalApp {
                 // Basic 32-bit Amazon Linux AMI 1.0 (AMI Id: ami-08728661)
                 request = new RunInstancesRequest("ami-e535c59d", 1, 1);
                 request.setInstanceType(InstanceType.T2Micro.toString());
+
                 instances = ec2.runInstances(request).getReservation().getInstances();
                 System.out.println("Launch instances: " + instances);
 

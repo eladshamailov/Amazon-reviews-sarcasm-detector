@@ -31,12 +31,12 @@ public class ManagerThread implements Runnable{
                 .withRegion("us-west-2")
                 .build();
 
-        for (int i = 0; i <SQSthread.messages.size(); i++) {
+        while(SQSthread.messages.size()>0) {
             int count = 0;
             Msg msg = new Gson().fromJson(SQSthread.messages.peek().getBody(), Msg.class);
             if (msg.getAction() == Actions.fromInt("URL")) {
                 File file = new File("localFile");
-                UrlMsg urlMsg = new Gson().fromJson(SQSthread.messages.poll().getBody(), UrlMsg.class);
+                UrlMsg urlMsg = new Gson().fromJson(SQSthread.messages.peek().getBody(), UrlMsg.class);
                 obj = Manager.S3.getObject(urlMsg.getBucketName(), urlMsg.getKey());
                 InputStream reader = new BufferedInputStream(
                         obj.getObjectContent());
@@ -66,6 +66,7 @@ public class ManagerThread implements Runnable{
                  //create a function that terminate the manager
                 }
             }
+            SQSthread.messages.poll();
         }
         doWork.set(true);
     }
