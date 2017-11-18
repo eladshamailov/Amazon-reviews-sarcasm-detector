@@ -6,11 +6,11 @@ public enum Actions {
      public static  int fromInt ( String a){
         switch (a) {
             case "TERMINATE":
-                return  1;
+                return  0;
             case "URL":
-                return 2;
+                return 1;
             case "REVIEW":
-                return 3;
+                return 2;
         }
         return -1;
     }

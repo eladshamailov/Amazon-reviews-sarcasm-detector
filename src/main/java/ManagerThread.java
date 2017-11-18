@@ -33,7 +33,6 @@ public class ManagerThread implements Runnable{
 
         for (int i = 0; i <SQSthread.messages.size(); i++) {
             int count = 0;
-            System.out.println("Listing all queues in your account.\n");
             Msg msg = new Gson().fromJson(SQSthread.messages.peek().getBody(), Msg.class);
             if (msg.getAction() == Actions.fromInt("URL")) {
                 File file = new File("localFile");
