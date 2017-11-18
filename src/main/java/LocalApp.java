@@ -43,7 +43,7 @@ public class LocalApp {
     public static void main(String[] args) throws Exception {
         run();
         startS3("C:\\Users\\Mor\\IdeaProjects\\Assignment1");
-        UpToS3("C:/Users/Mor/IdeaProjects/docs");
+        UpToS3("C:/Users/win10/IdeaProjects/docs");
         createQueue();
         sendMesage();
 
@@ -161,7 +161,7 @@ public class LocalApp {
 
     public static void createQueue() {
 
-         credentialsProvider =
+        credentialsProvider =
                 new AWSStaticCredentialsProvider(new ProfileCredentialsProvider().getCredentials());
         AmazonSQS sqs = AmazonSQSClientBuilder.standard()
                 .withCredentials(credentialsProvider)
