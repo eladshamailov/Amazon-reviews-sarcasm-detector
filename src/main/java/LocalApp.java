@@ -201,7 +201,6 @@ public class LocalApp {
             sqs.sendMessage(new SendMessageRequest(AppToManager, gson.toJson(urlMsg).toString()));
         }
     }
-
 }
 
 

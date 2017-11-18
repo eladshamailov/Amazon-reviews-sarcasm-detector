@@ -11,8 +11,6 @@ public class UrlMsg {
         this.URL = URL;
     }
 
-
-
     public int getAction() {
         return action;
     }
