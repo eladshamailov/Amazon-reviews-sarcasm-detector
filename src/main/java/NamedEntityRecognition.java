@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
@@ -24,7 +25,7 @@ public class NamedEntityRecognition {
         props.put("annotators", "tokenize , ssplit, pos, lemma, ner");
         StanfordCoreNLP NERPipeline =  new StanfordCoreNLP(props);
     }
-    public static void printEntities(String review){
+    public static ArrayList printEntities(String review) {
         // create an empty Annotation just with the given text
         Annotation document = new Annotation(review);
 
@@ -34,19 +35,20 @@ public class NamedEntityRecognition {
         // these are all the sentences in this document
         // a CoreMap is essentially a Map that uses class objects as keys and has values with custom types
         List<CoreMap> sentences = document.get(SentencesAnnotation.class);
-
-        for(CoreMap sentence: sentences) {
+        ArrayList<String> arrayList = new ArrayList<>();
+        for (CoreMap sentence : sentences) {
             // traversing the words in the current sentence
             // a CoreLabel is a CoreMap with additional token-specific methods
-            for (CoreLabel token: sentence.get(TokensAnnotation.class)) {
+            for (CoreLabel token : sentence.get(TokensAnnotation.class)) {
                 // this is the text of the token
                 String word = token.get(TextAnnotation.class);
                 // this is the NER label of the token
                 String ne = token.get(NamedEntityTagAnnotation.class);
+                arrayList.add("\t-" + word + ":" + ne);
                 System.out.println("\t-" + word + ":" + ne);
             }
         }
-
+        return arrayList;
     }
 
 }

@@ -13,8 +13,8 @@ import edu.stanford.nlp.trees.Tree;
 import edu.stanford.nlp.util.CoreMap;
 
 public class SentimentAnalysis {
-    public Properties props;
-    public StanfordCoreNLP  sentimentPipeline;
+    public static Properties props;
+    public static StanfordCoreNLP  sentimentPipeline;
     public SentimentAnalysis() {
         props = new Properties();
         props.put("annotators", "tokenize, ssplit, parse, sentiment");
@@ -22,11 +22,11 @@ public class SentimentAnalysis {
     }
 
 
-    public int findSentiment(String review) {
+    public static int findSentiment(String review) {
         int mainSentiment = 0;
         if (review!= null && review.length() > 0) {
             int longest = 0;
-            Annotation annotation = sentimentPipeline.process(review);
+            Annotation annotation =  sentimentPipeline.process(review);
             for (CoreMap sentence : annotation
                     .get(CoreAnnotations.SentencesAnnotation.class)) {
                 Tree tree = sentence

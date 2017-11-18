@@ -6,14 +6,13 @@ import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
+import com.amazonaws.services.sqs.model.DeleteMessageRequest;
 import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
+import com.amazonaws.services.sqs.model.SendMessageRequest;
 import com.google.gson.Gson;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
 public class Workers {
 
@@ -78,7 +77,35 @@ public class Workers {
     }
     public static void workOnMsg(Message message){
         ReviewMsg reviewMsg = new Gson().fromJson(message.getBody(), ReviewMsg.class);
-
+        for(Review review: reviewMsg.getReviews()){
+            int reviweGrade= SentimentAnalysis.findSentiment(review.toString());
+            ArrayList<String> a=NamedEntityRecognition.printEntities(review.toString());
+            OutputMsg outputMsg=new OutputMsg(review,reviweGrade,a);
+            sendMesage(outputMsg);
+            deleteMess(message);
+        }
 
     }
+    public static void sendMesage(OutputMsg outputMsg) {
+        credentialsProvider=new AWSStaticCredentialsProvider(new ProfileCredentialsProvider().getCredentials());
+        sqs = AmazonSQSClientBuilder.standard()
+                .withCredentials(credentialsProvider)
+                .withRegion("us-west-2")
+                .build();
+            System.out.println("Sending a message to WorkerToManager\n");
+            Gson gson=new Gson();
+            sqs.sendMessage(new SendMessageRequest(WorkerToManager, gson.toJson(outputMsg).toString()));
+    }
+
+    public static void deleteMess(Message message){
+//        sqs = AmazonSQSClientBuilder.standard()
+//                .withCredentials(Manager.credentialsProvider)
+//                .withRegion("us-west-2")
+//                .build();
+        System.out.println("Deleting a message.\n");
+        sqs.deleteMessage(new DeleteMessageRequest(MangerToWorker, message.getReceiptHandle()));
+    }
+
 }
+
+
