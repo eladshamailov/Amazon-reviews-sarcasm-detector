@@ -1,15 +1,6 @@
-public class TerminateMsg {
-    int action;
+public class TerminateMsg extends Msg {
 
     public TerminateMsg() {
-        action=Actions.TERMINATE.ordinal();
-    }
-
-    public int getAction() {
-        return action;
-    }
-
-    public void setAction(int action) {
-        this.action = action;
+        super.action=Actions.TERMINATE.ordinal();
     }
 }

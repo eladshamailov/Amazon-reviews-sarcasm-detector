@@ -188,24 +188,24 @@ public class LocalApp {
     }
 
     public static void sendMesage() {
-        new AWSStaticCredentialsProvider(new ProfileCredentialsProvider().getCredentials());
-        AmazonSQS sqs = AmazonSQSClientBuilder.standard()
+        credentialsProvider=new AWSStaticCredentialsProvider(new ProfileCredentialsProvider().getCredentials());
+        sqs = AmazonSQSClientBuilder.standard()
                 .withCredentials(credentialsProvider)
                 .withRegion("us-west-2")
                 .build();
         for (int i = 0; i < keys.size(); i++) {
             System.out.println("Sending a " + i + "message to ApptoMamager\n");
             System.out.println("the key:"+keys.elementAt(i).toString());
-//            JSONObject jsonObject = new JSONObject();
-//            jsonObject.put("action",1);
-//            jsonObject.put("keyElement", keys.elementAt(i).toString());
-//            jsonObject.put("bucketName",bucketName);
-//            sqs.sendMessage(new SendMessageRequest(AppToManager, S3.getUrl(bucketName,keys.elementAt(i)).toString()));
-
             UrlMsg urlMsg = new UrlMsg(bucketName,keys.elementAt(i),S3.getUrl(bucketName,keys.elementAt(i)).toString());
             Gson gson=new Gson();
             sqs.sendMessage(new SendMessageRequest(AppToManager, gson.toJson(urlMsg).toString()));
         }
+    }
+
+    public static void Terminate(){
+        TerminateMsg terminateMsg = new TerminateMsg();
+        Gson gson=new Gson();
+        sqs.sendMessage(new SendMessageRequest(AppToManager, gson.toJson(terminateMsg).toString()));
     }
 
 }
