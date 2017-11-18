@@ -1,5 +1,8 @@
 public class Msg {
-    private int action;
+    protected int action;
+
+    public Msg() {
+    }
 
     public Msg(int action) {
         this.action = action;
