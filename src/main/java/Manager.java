@@ -82,7 +82,6 @@ public class Manager {
         System.out.println("===========================================");
         System.out.println("Getting Started with Amazon SQS");
         System.out.println("===========================================\n");
-
     }
 
     //creating the Queues of the Worker-manager
