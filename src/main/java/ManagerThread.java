@@ -1,23 +1,27 @@
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
-import com.amazonaws.services.s3.model.ListObjectsRequest;
-import com.amazonaws.services.s3.model.ObjectListing;
-import com.amazonaws.services.s3.model.S3Object;
-import com.amazonaws.services.s3.model.S3ObjectSummary;
+import com.amazonaws.services.s3.model.*;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.AmazonSQSException;
 import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.SendMessageBatchRequest;
+import com.google.gson.Gson;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 
 import java.io.*;
 import java.text.ParseException;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ManagerThread implements Runnable{
     S3Object obj;
+    public static AtomicBoolean doWork=new AtomicBoolean(false);
+
+    List<Bucket> bucketList;
     @Override
     public void run() {
         Manager.credentialsProvider =
@@ -29,39 +33,36 @@ public class ManagerThread implements Runnable{
 
         for (int i = 0; i <SQSthread.messages.size(); i++) {
             int count = 0;
-            File file= null;
-            obj= Manager.S3.getObject(LocalApp.bucketName, LocalApp.keys.elementAt(i));
-            InputStream in = obj.getObjectContent();
-            byte[] buf = new byte[1024];
-            OutputStream out = null;
+            File file= new File("localFile");
+            System.out.println("Listing all queues in your account.\n");
+            UrlMsg urlMsg = new Gson().fromJson(SQSthread.messages.poll().getBody(),UrlMsg.class);
+            obj= Manager.S3.getObject(urlMsg.getBucketName(),urlMsg.getKey());
+            InputStream reader = new BufferedInputStream(
+                    obj.getObjectContent());
+            OutputStream writer = null;
             try {
-                out = new FileOutputStream(file);
-                count=in.read(buf);
-            while(count!= -1)
-            {
-                if( Thread.interrupted() )
-                {
-                    throw new InterruptedException();
+                writer = new BufferedOutputStream(new FileOutputStream(file));
+                int read = -1;
 
+                while ((read = reader.read()) != -1) {
+                    writer.write(read);
                 }
-                out.write(buf, 0, count);
+
+                writer.flush();
+                writer.close();
+                reader.close();
+                Manager.parse(file);
             }
-            out.close();
-            in.close();
-            Manager.parse(file);
-        }   catch (InterruptedException e) {
-        e.printStackTrace(); }
             catch (FileNotFoundException e) {
-            e.printStackTrace();
-            }
-            catch (IOException e) {
-            e.printStackTrace();
+                    e.printStackTrace();
+                } catch (org.json.simple.parser.ParseException e) {
+                e.printStackTrace();
             } catch (ParseException e) {
                 e.printStackTrace();
-            } catch (org.json.simple.parser.ParseException e) {
+            } catch (IOException e) {
                 e.printStackTrace();
             }
         }
-
+        doWork.set(true);
     }
 }

@@ -36,6 +36,7 @@ public class Manager {
     public static boolean isTerminate=false;
 
     public static void main(String[] args) throws InterruptedException {
+
         initialize();
         //create the threadPool
         ExecutorService executor = Executors.newFixedThreadPool(100);
@@ -52,6 +53,10 @@ public class Manager {
         for (int i = 0; i < SQSthread.messages.size(); i++) {
             Runnable manager=new ManagerThread();
             executor.execute(manager);
+            while (!ManagerThread.doWork.get()){
+                Thread.currentThread().sleep(10000);
+                System.out.println("waiting");
+            }
         }
         executor.shutdown();
         while (!executor.isTerminated()) {

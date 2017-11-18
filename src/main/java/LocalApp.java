@@ -17,6 +17,8 @@ import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
+import com.google.gson.Gson;
+import org.json.simple.JSONObject;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -194,7 +196,15 @@ public class LocalApp {
         for (int i = 0; i < keys.size(); i++) {
             System.out.println("Sending a " + i + "message to ApptoMamager\n");
             System.out.println("the key:"+keys.elementAt(i).toString());
-            sqs.sendMessage(new SendMessageRequest(AppToManager, S3.getUrl(bucketName,keys.elementAt(i)).toString()));
+//            JSONObject jsonObject = new JSONObject();
+//            jsonObject.put("action",1);
+//            jsonObject.put("keyElement", keys.elementAt(i).toString());
+//            jsonObject.put("bucketName",bucketName);
+//            sqs.sendMessage(new SendMessageRequest(AppToManager, S3.getUrl(bucketName,keys.elementAt(i)).toString()));
+
+            UrlMsg urlMsg = new UrlMsg(bucketName,keys.elementAt(i),S3.getUrl(bucketName,keys.elementAt(i)).toString());
+            Gson gson=new Gson();
+            sqs.sendMessage(new SendMessageRequest(AppToManager, gson.toJson(urlMsg).toString()));
         }
     }
 
