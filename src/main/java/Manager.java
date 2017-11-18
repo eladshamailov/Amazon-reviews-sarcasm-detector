@@ -24,7 +24,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 public class Manager {
-    public static ConcurrentHashMap<String, Integer> files;
+    public static ConcurrentHashMap<String, Integer> files=new ConcurrentHashMap<>();
     public static AmazonS3 S3;
     public static AmazonEC2 ec2;
     public static AmazonSQS sqs;
@@ -105,8 +105,9 @@ public class Manager {
 
     //adding a message to the local Queue+ call deleteMess function
     public static void  add(Message m) {
-            SQSthread.messages.add(m);
-            SQSthread.count.getAndIncrement();
+        SQSthread.messages.add(m);
+        SQSthread.count.getAndIncrement();
+        files.put(m.getBody().toString(),0);
         System.out.println("counter is: "+SQSthread.count);
         synchronized (SQSthread.messages) {
             SQSthread.messages.notifyAll();

@@ -85,10 +85,8 @@ public class SQSthread implements Runnable{
                             e.printStackTrace();
                         }
                     }
-
-                }
             }
         }
-
-
     }
+
+}
