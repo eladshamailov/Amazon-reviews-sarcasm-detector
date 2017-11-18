@@ -1,4 +1,4 @@
-public class UrlMsg extends Msg{
+public class UrlMsg extends Msg {
     String bucketName;
     String key;
     String URL;
@@ -8,14 +8,6 @@ public class UrlMsg extends Msg{
         this.bucketName = bucketName;
         this.key = key;
         this.URL = URL;
-    }
-
-    public int getAction() {
-        return super.action;
-    }
-
-    public void setAction(int action) {
-        super.action = action;
     }
 
     public String getBucketName() {

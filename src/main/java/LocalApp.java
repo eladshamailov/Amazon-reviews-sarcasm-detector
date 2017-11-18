@@ -188,8 +188,8 @@ public class LocalApp {
     }
 
     public static void sendMesage() {
-        new AWSStaticCredentialsProvider(new ProfileCredentialsProvider().getCredentials());
-        AmazonSQS sqs = AmazonSQSClientBuilder.standard()
+        credentialsProvider=new AWSStaticCredentialsProvider(new ProfileCredentialsProvider().getCredentials());
+        sqs = AmazonSQSClientBuilder.standard()
                 .withCredentials(credentialsProvider)
                 .withRegion("us-west-2")
                 .build();
@@ -201,6 +201,13 @@ public class LocalApp {
             sqs.sendMessage(new SendMessageRequest(AppToManager, gson.toJson(urlMsg).toString()));
         }
     }
+
+    public static void Terminate(){
+        TerminateMsg terminateMsg = new TerminateMsg();
+        Gson gson=new Gson();
+        sqs.sendMessage(new SendMessageRequest(AppToManager, gson.toJson(terminateMsg).toString()));
+    }
+
 }
 
 

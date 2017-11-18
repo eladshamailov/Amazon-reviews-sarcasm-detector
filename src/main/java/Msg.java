@@ -1,12 +1,5 @@
 public class Msg {
-    protected int action;
-
-    public Msg() {
-    }
-
-    public Msg(int action) {
-        this.action = action;
-    }
+   protected int action;
 
     public int getAction() {
         return action;

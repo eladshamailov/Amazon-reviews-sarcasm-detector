@@ -36,8 +36,8 @@ public class Manager {
     public static boolean isTerminate=false;
 
     public static void main(String[] args) throws InterruptedException {
-
         initialize();
+        createQueue();
         //create the threadPool
         ExecutorService executor = Executors.newFixedThreadPool(100);
         //create the job to execute
@@ -49,7 +49,7 @@ public class Manager {
             Thread.currentThread().sleep(10000);
             System.out.println("waiting");
         }
-        System.out.println("the thread"+Thread.currentThread().getName());
+        System.out.println("the thread: "+Thread.currentThread().getName());
         for (int i = 0; i < SQSthread.messages.size(); i++) {
             Runnable manager=new ManagerThread();
             executor.execute(manager);
@@ -62,15 +62,8 @@ public class Manager {
         while (!executor.isTerminated()) {
         }
     }
-    public static void  add(Message m) {
-            SQSthread.messages.add(m);
-            SQSthread.count.getAndIncrement();
-        System.out.println("counter is: "+SQSthread.count);
-        synchronized (SQSthread.messages) {
-            SQSthread.messages.notifyAll();
-        }
-        deleteMess();
-    }
+
+    //creating a connection to the ec2 snd the sqs
 
     public static void initialize() {
         credentialsProvider = new AWSStaticCredentialsProvider
@@ -92,30 +85,8 @@ public class Manager {
 
     }
 
-    public static void deleteMess(){
-        sqs = AmazonSQSClientBuilder.standard()
-                .withCredentials(Manager.credentialsProvider)
-                .withRegion("us-west-2")
-                .build();
-        System.out.println("Deleting a message.\n");
-        Message tmp []=new Message[SQSthread.messages.size()];
-        SQSthread.messages.toArray(tmp);
-        String messageRecieptHandle = (tmp[SQSthread.count.get()-1]).getReceiptHandle();
-        sqs.deleteMessage(new DeleteMessageRequest(SQSthread.URLlist.get(0), messageRecieptHandle));
-
-    }
-
+    //creating the Queues of the Worker-manager
     public static void createQueue() {
-        credentialsProvider =
-                new AWSStaticCredentialsProvider(new ProfileCredentialsProvider().getCredentials());
-        sqs = AmazonSQSClientBuilder.standard()
-                .withCredentials(credentialsProvider)
-                .withRegion("us-west-2")
-                .build();
-        System.out.println("===========================================");
-        System.out.println("Getting Started with Amazon SQS");
-        System.out.println("===========================================\n");
-
         System.out.println("Creating a new SQS queue called MangerToApp.\n");
         CreateQueueRequest createQueueRequest1 = new CreateQueueRequest
                 ("MangerToWorker" + UUID.randomUUID());
@@ -132,6 +103,30 @@ public class Manager {
         System.out.println();
     }
 
+    //adding a message to the local Queue+ call deleteMess function
+    public static void  add(Message m) {
+            SQSthread.messages.add(m);
+            SQSthread.count.getAndIncrement();
+        System.out.println("counter is: "+SQSthread.count);
+        synchronized (SQSthread.messages) {
+            SQSthread.messages.notifyAll();
+        }
+        deleteMess();
+    }
+
+    //delete a msg from the sqs Queue
+    public static void deleteMess(){
+//        sqs = AmazonSQSClientBuilder.standard()
+//                .withCredentials(Manager.credentialsProvider)
+//                .withRegion("us-west-2")
+//                .build();
+        System.out.println("Deleting a message.\n");
+        Message tmp []=new Message[SQSthread.messages.size()];
+        SQSthread.messages.toArray(tmp);
+        String messageRecieptHandle = (tmp[SQSthread.count.get()-1]).getReceiptHandle();
+        sqs.deleteMessage(new DeleteMessageRequest(SQSthread.URLlist.get(0), messageRecieptHandle));
+
+    }
 
     public static void parse(File file) throws IOException, ParseException, org.json.simple.parser.ParseException {
         credentialsProvider =
@@ -150,6 +145,7 @@ public class Manager {
         int i=0;
         while (line != null) {
             json = (JSONObject) parser.parse(line);
+            //upload the msg to the MangerToWorker Queue
             sqs.sendMessage(new SendMessageRequest(MangerToWorker,json.toString()));
             //יש ליצור עובד חדש
             int x=files.get(SQSthread.messages.peek());

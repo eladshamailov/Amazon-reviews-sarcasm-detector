@@ -33,34 +33,39 @@ public class ManagerThread implements Runnable{
 
         for (int i = 0; i <SQSthread.messages.size(); i++) {
             int count = 0;
-            File file= new File("localFile");
             System.out.println("Listing all queues in your account.\n");
-            UrlMsg urlMsg = new Gson().fromJson(SQSthread.messages.poll().getBody(),UrlMsg.class);
-            obj= Manager.S3.getObject(urlMsg.getBucketName(),urlMsg.getKey());
-            InputStream reader = new BufferedInputStream(
-                    obj.getObjectContent());
-            OutputStream writer = null;
-            try {
-                writer = new BufferedOutputStream(new FileOutputStream(file));
-                int read = -1;
+            Msg msg = new Gson().fromJson(SQSthread.messages.peek().getBody(), Msg.class);
+            if (msg.getAction() == Actions.fromInt("URL")) {
+                File file = new File("localFile");
+                UrlMsg urlMsg = new Gson().fromJson(SQSthread.messages.poll().getBody(), UrlMsg.class);
+                obj = Manager.S3.getObject(urlMsg.getBucketName(), urlMsg.getKey());
+                InputStream reader = new BufferedInputStream(
+                        obj.getObjectContent());
+                OutputStream writer = null;
+                try {
+                    writer = new BufferedOutputStream(new FileOutputStream(file));
+                    int read = -1;
 
-                while ((read = reader.read()) != -1) {
-                    writer.write(read);
-                }
-
-                writer.flush();
-                writer.close();
-                reader.close();
-                Manager.parse(file);
-            }
-            catch (FileNotFoundException e) {
+                    while ((read = reader.read()) != -1) {
+                        writer.write(read);
+                    }
+                    writer.flush();
+                    writer.close();
+                    reader.close();
+                    Manager.parse(file);
+                } catch (FileNotFoundException e) {
                     e.printStackTrace();
                 } catch (org.json.simple.parser.ParseException e) {
-                e.printStackTrace();
-            } catch (ParseException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
+                    e.printStackTrace();
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                if (msg.getAction() == Actions.fromInt("TERMINATE")) {
+                 //create a function that terminate the manager
+                }
             }
         }
         doWork.set(true);
