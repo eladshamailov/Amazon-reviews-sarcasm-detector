@@ -54,7 +54,7 @@ public class Manager {
             Runnable manager=new ManagerThread();
             executor.execute(manager);
             while (!ManagerThread.doWork.get()){
-                Thread.currentThread().sleep(10000);
+                Thread.currentThread().sleep(1000);
                 System.out.println("waiting");
             }
         }
