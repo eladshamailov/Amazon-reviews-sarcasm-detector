@@ -21,12 +21,11 @@ public class SentimentAnalysis {
         sentimentPipeline =  new StanfordCoreNLP(props);
     }
 
-
     public static int findSentiment(String review) {
         int mainSentiment = 0;
         if (review!= null && review.length() > 0) {
             int longest = 0;
-            Annotation annotation =  sentimentPipeline.process(review);
+            Annotation annotation = sentimentPipeline.process(review);
             for (CoreMap sentence : annotation
                     .get(CoreAnnotations.SentencesAnnotation.class)) {
                 Tree tree = sentence
@@ -37,7 +36,6 @@ public class SentimentAnalysis {
                     mainSentiment = sentiment;
                     longest = partText.length();
                 }
-
             }
         }
         return mainSentiment;
