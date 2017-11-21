@@ -14,6 +14,14 @@ First , we need to Download the input files and place them in:
 ```
 /users/studs/bsc/2015/eladsham/workspace/Dsp181/
 ```
+The input files we used to test the application are listed below:
+
+* [0689835604](https://www.cs.bgu.ac.il/~dsp181/wiki.files/0689835604)
+* [B000EVOSE4](https://www.cs.bgu.ac.il/~dsp181/wiki.files/B000EVOSE4)
+* [B001DZTJRQ](https://www.cs.bgu.ac.il/~dsp181/wiki.files/B001DZTJRQ)
+* [B0047E0EII](https://www.cs.bgu.ac.il/~dsp181/wiki.files/B0047E0EII)
+* [B01LYRCIPG](https://www.cs.bgu.ac.il/~dsp181/wiki.files/B01LYRCIPG)
+
 Next, we have to upload the following zip files to our bucket:
 
 1.manager.zip
@@ -28,6 +36,7 @@ java -jar Assignment1.jar inputFileName1… inputFileNameN outputFileName1… ou
  ```
  java  -jar Assignment1.jar inputFileName1… inputFileNameN outputFileName1… outputFileNameNn terminate
 ```
+
 ## How the program works
 * The localapp creates a bucket and two queues: AppToManager and ManagerToApp.
 * The localapp uploads the input file of the amazon reviews to the s3
@@ -38,3 +47,4 @@ The SQSthread detects it and than the manager downloads the message using the SQ
 * Using the fixedThreadPool, the manager sets on the managerThread , which parses the downloaded messages.
 
 @TODO: add more detailes about how the program works
+
