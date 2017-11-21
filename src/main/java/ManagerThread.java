@@ -33,7 +33,7 @@ public class ManagerThread implements Runnable{
 
         while(SQSthread.messages.size()>0) {
             int count = 0;
-            Msg msg = new Gson().fromJson(SQSthread.messages.peek().getBody(), Msg.class);
+                Msg msg = new Gson().fromJson(SQSthread.messages.peek().getBody(), Msg.class);
             if (msg.getAction() == Actions.fromInt("URL")) {
                 File file = new File("localFile");
                 UrlMsg urlMsg = new Gson().fromJson(SQSthread.messages.peek().getBody(), UrlMsg.class);

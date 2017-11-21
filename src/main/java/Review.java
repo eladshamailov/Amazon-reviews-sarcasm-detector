@@ -1,4 +1,6 @@
+import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 
 public class Review {
 private String id;
@@ -7,9 +9,9 @@ private String title;
 private String text;
 private int rating;
 private String author;
-private Date date;
+private String date;
 
-    public Review(String id, String link, String title, String text, int rating, String author, Date date) {
+    public Review(String id, String link, String title, String text, int rating, String author, String date) {
         this.id = id;
         this.link = link;
         this.title = title;
@@ -67,11 +69,11 @@ private Date date;
         this.author = author;
     }
 
-    public Date getDate() {
+    public String getDate() {
         return date;
     }
 
-    public void setDate(Date date) {
+    public void setDate(String date) {
         this.date = date;
     }
 }

@@ -58,8 +58,8 @@ public class Workers {
                 .build();
 
         System.out.println("Listing all queues in your account.\n");
-        MangerToWorker = sqs.listQueues("MangerToWorker").getQueueUrls().get(0);
-        WorkerToManager = sqs.listQueues("WorkerToManager").getQueueUrls().get(0);
+        MangerToWorker = sqs.listQueues("MangerToWorker").getQueueUrls().get(2);
+        WorkerToManager = sqs.listQueues("WorkerToManager").getQueueUrls().get(3);
         while (!terminate) {
             ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(MangerToWorker);
             List<Message> messages = sqs.receiveMessage(receiveMessageRequest.withMessageAttributeNames("All")).getMessages();
@@ -71,6 +71,8 @@ public class Workers {
                     }
                 }, 25000);
 
+            workOnMsg(message);
+            deleteMess(message);
             }
 
         }
@@ -78,7 +80,8 @@ public class Workers {
     public static void workOnMsg(Message message){
         ReviewMsg reviewMsg = new Gson().fromJson(message.getBody(), ReviewMsg.class);
         for(Review review: reviewMsg.getReviews()){
-            int reviweGrade= SentimentAnalysis.findSentiment(review.toString());
+            SentimentAnalysis sentimentAnalysis=new SentimentAnalysis();
+            int reviweGrade= sentimentAnalysis.findSentiment(review.toString());
             ArrayList<String> a=NamedEntityRecognition.printEntities(review.toString());
             OutputMsg outputMsg=new OutputMsg(review,reviweGrade,a);
             sendMesage(outputMsg);

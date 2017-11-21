@@ -4,11 +4,13 @@ public class OutputMsg {
     Review review;
     int sentiment;
     ArrayList<String> extractedEntities;
+    boolean lastMsg;
 
     public OutputMsg(Review review, int sentiment, ArrayList<String> extractedEntities) {
         this.review = review;
         this.sentiment = sentiment;
         this.extractedEntities = extractedEntities;
+        this.lastMsg=false;
     }
 
     public Review getReview() {
@@ -33,5 +35,11 @@ public class OutputMsg {
 
     public void setExtractedEntities(ArrayList<String> extractedEntities) {
         this.extractedEntities = extractedEntities;
+    }
+    public boolean getLABoolean(){
+        return lastMsg;
+    }
+    public void setLastMsg(boolean n){
+        lastMsg=n;
     }
 }

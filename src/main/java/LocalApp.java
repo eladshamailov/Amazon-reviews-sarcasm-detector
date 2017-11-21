@@ -16,6 +16,8 @@ import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
+import com.amazonaws.services.sqs.model.Message;
+import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
 import com.google.gson.Gson;
 import org.json.simple.JSONObject;
@@ -39,32 +41,38 @@ public class LocalApp {
     public static Vector<String> keys=new Vector<String>() ;
     public static String MangerToApp;
     public static String AppToManager;
+    public static boolean Terminate=  false;
 
     public static void main(String[] args) throws Exception {
-        run();
+        init();
         startS3("C:\\Users\\Mor\\IdeaProjects\\Assignment1");
-        UpToS3("C:/Users/win10/IdeaProjects/docs");
+        UpToS3("C:/Users/Mor/IdeaProjects/docs");
         createQueue();
         sendMesage();
-
+        while (!Terminate) {
+            getOutput();
+            createHTML();
+        }
     }
-
-    public static void run() {
+    //initilize and creating instance
+    public static void init() {
         credentialsProvider = new AWSStaticCredentialsProvider
                 (new ProfileCredentialsProvider().getCredentials());
         ec2 = AmazonEC2ClientBuilder.standard()
                 .withCredentials(credentialsProvider)
                 .withRegion("us-west-2")
                 .build();
-
-        if (!isActive()) {
+       Script s=new Script(credentialsProvider.getCredentials().getAWSAccessKeyId(),credentialsProvider.getCredentials().getAWSSecretKey());
+       System.out.println("the script for the Manager: "+s);
+       if (!isActive()) {
             try {
-                // Basic 32-bit Amazon Linux AMI 1.0 (AMI Id: ami-08728661)
                 request = new RunInstancesRequest("ami-e535c59d", 1, 1);
                 request.setInstanceType(InstanceType.T2Micro.toString());
-
+                request.setUserData(s.getManagerScript());
+                request.withKeyName("morKP");
+                request.withSecurityGroups("mor");
                 instances = ec2.runInstances(request).getReservation().getInstances();
-                System.out.println("Launch instances: " + instances);
+                System.out.println("create instances: " + instances);
 
             } catch (AmazonServiceException ase) {
                 System.out.println("Caught Exception: " + ase.getMessage());
@@ -74,7 +82,6 @@ public class LocalApp {
             }
         }
     }
-
 
     public static boolean isActive() {
         DescribeInstancesRequest dis = new DescribeInstancesRequest();
@@ -87,6 +94,7 @@ public class LocalApp {
                 List<Instance> instancelist = res.getInstances();
                 for (Instance instance : instancelist) {
                     if (instance.getState().getName().equals("running")) {
+                        System.out.println("The Manager is allready active");
                         return true;
                     }
                     List<Tag> t1 = instance.getTags();
@@ -99,33 +107,9 @@ public class LocalApp {
         return false;
     }
 
-    public static void UpToS3(String directoryName) {
-        try {
-            System.out.println("Uploading a new object to S3 from a file");
-            int i = 0;
-            File dir = new File(directoryName);
-            for (File file : dir.listFiles()) {
-                keys.add(file.getName().replace
-                        ('\\', '-').replace('/', '-').
-                        replace(':', '-'));
-                PutObjectRequest req = new PutObjectRequest(bucketName, keys.elementAt(i), file);
-                S3.putObject(req);
-                i++;
-            }
-        } catch (AmazonServiceException ace) {
-            System.out.println("Uploading");
-            System.out.println("Caught an AmazonClientException," +
-                    " which means the client encountered "
-                    + "a serious internal problem while trying to communicate with " +
-                    "S3, "
-                    + "such as not being able to access the network.");
-            System.out.println("Error Message: " + ace.getMessage());
-        }
-    }
-
     public static void startS3(String directoryName) {
-        credentialsProvider =
-                new AWSStaticCredentialsProvider(new ProfileCredentialsProvider().getCredentials());
+//        credentialsProvider =
+//                new AWSStaticCredentialsProvider(new ProfileCredentialsProvider().getCredentials());
         S3 = AmazonS3ClientBuilder.standard()
                 .withCredentials(credentialsProvider)
                 .withRegion("us-west-2")
@@ -138,7 +122,6 @@ public class LocalApp {
         System.out.println("===========================================");
         System.out.println("Getting Started with Amazon S3");
         System.out.println("===========================================\n");
-
         try {
             System.out.println("Creating bucket " + bucketName + "\n");
             S3.createBucket(bucketName);
@@ -160,10 +143,34 @@ public class LocalApp {
         }
     }
 
-    public static void createQueue() {
+    public static void UpToS3(String directoryName) {
+        try {
+            System.out.println("Uploading a new object to S3 from a file");
+            int i = 0;
+            File dir = new File(directoryName);
+            for (File file : dir.listFiles()) {
+                keys.add(file.getName().replace
+                        ('\\', '-').replace('/', '-').
+                        replace(':', '-'));
+                PutObjectRequest req = new PutObjectRequest(bucketName, keys.elementAt(i), file);
+                S3.putObject(req);
+                i++;
+            }
+        } catch (AmazonServiceException ace) {
+            System.out.println("Uploading");
+            System.out.println("Caught an AmazonClientException," +
+                    " which means the client encountered "
+                    + "a serious internal problem while trying to communicate with " + "S3, "
+                    + "such as not being able to access the network.");
+            System.out.println("Error Message: " + ace.getMessage());
+        }
+    }
 
-        credentialsProvider =
-                new AWSStaticCredentialsProvider(new ProfileCredentialsProvider().getCredentials());
+//create the queues for manager- localApp communication
+    public static void createQueue() {
+//        credentialsProvider =
+//                new AWSStaticCredentialsProvider(new ProfileCredentialsProvider().getCredentials());
+        System.out.println("start a connection with the sqs");
         AmazonSQS sqs = AmazonSQSClientBuilder.standard()
                 .withCredentials(credentialsProvider)
                 .withRegion("us-west-2")
@@ -187,7 +194,7 @@ public class LocalApp {
         }
         System.out.println();
     }
-
+    //send a URLmsg
     public static void sendMesage() {
         credentialsProvider=new AWSStaticCredentialsProvider(new ProfileCredentialsProvider().getCredentials());
         sqs = AmazonSQSClientBuilder.standard()
@@ -202,6 +209,18 @@ public class LocalApp {
             sqs.sendMessage(new SendMessageRequest(AppToManager, gson.toJson(urlMsg).toString()));
         }
     }
+    //get an output from the queue
+    public static void getOutput(){
+        sqs.listQueues("ManagerToWorker").getQueueUrls().get(1);
+        ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(MangerToApp);
+        List<Message> tmp = Manager.sqs.receiveMessage(receiveMessageRequest).getMessages();
+        OutputMsg outputMsg=tmp.get(0);
+        if(tmp.size()>0){
+            createHTML();
+        }
+    }
+
+    public static void createHTML(){ }
 
     public static void Terminate(){
         TerminateMsg terminateMsg = new TerminateMsg();
