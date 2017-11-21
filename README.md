@@ -69,7 +69,7 @@ We have to put in mind , that a large number of clients will really slow down th
 
 **Question:** What about persistence? What if a node dies? What if a node stalls for a while? Have you taken care of all possible outcomes in the system? Think of more possible issues that might arise from failures. What did you do to solve it? What about broken communications? Be sure to handle all fail-cases!
 
-**Answer:** We used the [Visibility Timeout](Visibility Timeout). If a worker gets a message , we do not remove immidietally the message. By using the Visibility Timeout , once a worker receives a message , the Visibility Timeout prevents other workers from receiving and processing the message for some time( we chose 25 seconds, it can be changes in the worker class ).
+**Answer:** We used the Visibility Timeout. If a worker gets a message , we do not remove immidietally the message. By using the Visibility Timeout , once a worker receives a message , the Visibility Timeout prevents other workers from receiving and processing the message for some time( we chose 25 seconds, it can be changes in the worker class ).
 If the node dies , the message will get back to the queue (we never deleted it) , and another worker will take it.
 If the node stalls for a while , the message will get back to the queue , the worker will stop working on it and another worker will handle it.
 If there is a broken communication, we will detect a failed ReceiveMessage action , and than we will retry as many times as necessary, using the same receive request attempt ID. multiple retries do not affect the ordering of messages.
