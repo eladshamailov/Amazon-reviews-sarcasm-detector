@@ -63,15 +63,26 @@ The n we used is: **@TODO: insert the n we used**
 
 **Question:** Did you think about scalability? Will your program work properly when 1 million clients connected at the same time? How about 2 million? 1 billion? Scalability is very important aspect of the system, is it scalable?
 
-**Answer:**  **@TODO: answer the question**
+**Answer:**  Yes , we thought about scalability. The manager works with fixedThreadPool , we set a constant numebr of threads: "z" and the manager executes the "ManagerThread" when we recieves new message.
+The program will work properly with a large amount of users ,because for each new user, we set it's own two queues. in this way , we can assure that for every client , the received message and the sent message will be the right answer and no problen shoule occur.
+We have to put in mind , that a large number of clients will really slow down the program , because of technical issues.
 
 **Question:** What about persistence? What if a node dies? What if a node stalls for a while? Have you taken care of all possible outcomes in the system? Think of more possible issues that might arise from failures. What did you do to solve it? What about broken communications? Be sure to handle all fail-cases!
 
-**Answer:**  **@TODO: answer the question**
+**Answer:** We used the [Visibility Timeout](Visibility Timeout). If a worker gets a message , we do not remove immidietally the message. By using the Visibility Timeout , once a worker receives a message , the Visibility Timeout prevents other workers from receiving and processing the message for some time( we chose 25 seconds, it can be changes in the worker class ).
+If the node dies , the message will get back to the queue (we never deleted it) , and another worker will take it.
+If the node stalls for a while , the message will get back to the queue , the worker will stop working on it and another worker will handle it.
+If there is a broken communication, we will detect a failed ReceiveMessage action , and than we will retry as many times as necessary, using the same receive request attempt ID. multiple retries do not affect the ordering of messages.
+If we detect a failed SendMessage action, we will retry sending as many times as necessary, using the same message deduplication ID.
 
 **Question:** Threads in your application, when is it a good idea? When is it bad?
 
-**Answer:**  **@TODO: answer the question**
+**Answer:** The manager uses a fixedThreadPool with a constant "z" that we choose. we have the class SQSThread , the manager sets on this thread , and his purpose is to wait all the time for new messages from the localup. once a new message received, the SQSThread detects it , and then the Manager sets on another thread to parse the message. using the thread pool and the ManagerThread class , the manager sets on a thread for every meesage (we have "z" threads available).
+In this way , we can process a big amount of messages while not overloading the system.
+IF there are more than "z' messages , the program will wait until some thread will finish his job , and than we will process the message.
+
+It's a bad idea to use threads for worker , because a single-thread worker will work faster due to the low amount of time required to process a message.
+It's also a bad idea to use threads in localapp, because it can cause us problems with the download of the input files due to cpu stealing time , and the running time won't improve , and maybe even will get worse.
 
 **Question:** Did you run more than one client at the same time? Be sure they work properly, and finish properly, and your results are correct.
 
