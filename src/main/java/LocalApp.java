@@ -20,9 +20,14 @@ import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
 import com.google.gson.Gson;
+import com.sun.prism.paint.Color;
 import org.json.simple.JSONObject;
 
-import java.io.File;
+import javax.swing.text.html.HTML;
+
+import static j2html.TagCreator.*;
+
+import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -44,15 +49,25 @@ public class LocalApp {
     public static boolean Terminate=  false;
 
     public static void main(String[] args) throws Exception {
-        init();
-        startS3("C:\\Users\\Mor\\IdeaProjects\\Assignment1");
-        UpToS3("C:/Users/Mor/IdeaProjects/docs");
-        createQueue();
-        sendMesage();
-        while (!Terminate) {
-            getOutput();
-            createHTML();
-        }
+        File file = new File("test.htm");
+        BufferedWriter bw = new BufferedWriter(new FileWriter(file));
+        bw.write("<html>");
+        bw.write("<body>");
+        bw.write("<h1 style=background-color:DodgerBlue>Hello World</h1>");
+        bw.write("<h2> mor </h2>");
+        bw.close();
+
+        //init();
+        //startS3("C:\\Users\\Mor\\IdeaProjects\\Assignment1");
+        //UpToS3("C:/Users/Mor/IdeaProjects/docs");
+        //createQueue();
+        //sendMesage();
+//        while (!Terminate) {
+//            getOutput();
+//        }
+//        Terminate();
+
+
     }
     //initilize and creating instance
     public static void init() {
@@ -214,13 +229,21 @@ public class LocalApp {
         sqs.listQueues("ManagerToWorker").getQueueUrls().get(1);
         ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(MangerToApp);
         List<Message> tmp = Manager.sqs.receiveMessage(receiveMessageRequest).getMessages();
-        OutputMsg outputMsg=tmp.get(0);
+        OutputMsg outputMsg = new Gson().fromJson(tmp.get(0).getBody().toString(), OutputMsg.class);
         if(tmp.size()>0){
             createHTML();
         }
+        if(outputMsg.getLastMsg()==true){
+            System.out.println("this is the last Msg");
+            Terminate=true;
+        }
     }
 
-    public static void createHTML(){ }
+    public static void createHTML() {
+        h1("mor").withStyle(String.valueOf(Color.RED));
+        h2("bitan");
+
+    }
 
     public static void Terminate(){
         TerminateMsg terminateMsg = new TerminateMsg();

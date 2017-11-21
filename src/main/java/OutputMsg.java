@@ -36,7 +36,7 @@ public class OutputMsg {
     public void setExtractedEntities(ArrayList<String> extractedEntities) {
         this.extractedEntities = extractedEntities;
     }
-    public boolean getLABoolean(){
+    public boolean getLastMsg(){
         return lastMsg;
     }
     public void setLastMsg(boolean n){
