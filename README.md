@@ -36,3 +36,5 @@ we are using json to read and write the information in more convenient way.
 * The manager is always waiting for new messages using a fixedThreadPool and a SQSthread that we created. once a new message received ,
 The SQSthread detects it and than the manager downloads the message using the SQSthread
 * Using the fixedThreadPool, the manager sets on the managerThread , which parses the downloaded messages.
+
+@TODO: add more detailes about how the program works
