@@ -30,6 +30,7 @@ import static j2html.TagCreator.*;
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.Vector;
@@ -46,22 +47,22 @@ public class LocalApp {
     public static Vector<String> keys=new Vector<String>() ;
     public static String MangerToApp;
     public static String AppToManager;
+    public  static File file = new File("test.htm");
     public static boolean Terminate=  false;
 
     public static void main(String[] args) throws Exception {
-        File file = new File("test.htm");
-        BufferedWriter bw = new BufferedWriter(new FileWriter(file));
-        bw.write("<html>");
-        bw.write("<body>");
-        bw.write("<h1 style=background-color:DodgerBlue>Hello World</h1>");
-        bw.write("<h2> mor </h2>");
-        bw.close();
-
-        //init();
-        //startS3("C:\\Users\\Mor\\IdeaProjects\\Assignment1");
-        //UpToS3("C:/Users/Mor/IdeaProjects/docs");
-        //createQueue();
-        //sendMesage();
+        Review review=new Review("R14D3WP6J91DCU","\"https://www.amazon.com/gp/customer-reviews/R14D3WP6J91DCU/ref=cm_cr_arp_d_rvw_ttl?ie=UTF8&ASIN=0689835604","Five Stars","Super cute book. My son loves lifting the flaps",5,"Nikki", "2017-05-01T21:00:00.000Z");
+       ArrayList<String > s=new ArrayList<>();
+       s.add("mor");
+       s.add(" kjdsk");
+       s.add("djkj");
+        OutputMsg outputMsg=new OutputMsg(review,1,s);
+        createHTML(outputMsg);
+//        //init();
+//        startS3("C:\\Users\\Mor\\IdeaProjects\\Assignment1");
+//        UpToS3("C:/Users/Mor/IdeaProjects/docs");
+//        createQueue();
+//        sendMesage();
 //        while (!Terminate) {
 //            getOutput();
 //        }
@@ -231,7 +232,11 @@ public class LocalApp {
         List<Message> tmp = Manager.sqs.receiveMessage(receiveMessageRequest).getMessages();
         OutputMsg outputMsg = new Gson().fromJson(tmp.get(0).getBody().toString(), OutputMsg.class);
         if(tmp.size()>0){
-            createHTML();
+            try {
+                createHTML(outputMsg);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
         if(outputMsg.getLastMsg()==true){
             System.out.println("this is the last Msg");
@@ -239,16 +244,62 @@ public class LocalApp {
         }
     }
 
-    public static void createHTML() {
-        h1("mor").withStyle(String.valueOf(Color.RED));
-        h2("bitan");
+    public static void createHTML(OutputMsg outputMsg) throws IOException {
+        BufferedWriter bw = new BufferedWriter(new FileWriter(file));
+        bw.write("<html>");
 
+
+        String s;
+        StringBuilder builder= new StringBuilder();
+        ArrayList<String> extractedEntities=outputMsg.getExtractedEntities();
+        int i=0;
+        while (i<extractedEntities.size()){
+            builder.append(extractedEntities.get(i));
+            i++;
+        }
+        s="[ "+builder.toString()+" ]";
+        Review review= outputMsg.getReview();
+        boolean b=Srcasem(outputMsg);
+        String r;
+        if(b==true) {
+             r = review.getId()+" "+review.getLink()+review.getDate()+" "+ review.getRating()+review.getLink()+" "+review.getText() +" "+ " " + s+ " the text is srcasem";
+        }
+        else {
+            r = review.toString() + " " + s+ " the text isn't sracastic ";
+        }
+        switch (outputMsg.getSentiment()) {
+            case 0:
+                bw.write("<h2 style=background-color:DarkRed>" + r + "</h2>");
+                break;
+            case 1:
+                bw.write("<h2 style=background-color:red>" + r + "</h2>");
+                break;
+            case 2:
+                bw.write("<h2 style=background-color:black>" + r + "</h2>");
+                break;
+            case 3:
+                bw.write("<h2 style=background-color:LightGreen>" + r + "</h2>");
+                break;
+            case 4:
+                bw.write("<h2 style=background-color:DarkGreen>" + r + "</h2>");
+                break;
+        }
+        bw.write("</html>");
+        bw.write("</body>");
+        bw.close();
     }
 
     public static void Terminate(){
         TerminateMsg terminateMsg = new TerminateMsg();
         Gson gson=new Gson();
         sqs.sendMessage(new SendMessageRequest(AppToManager, gson.toJson(terminateMsg).toString()));
+    }
+
+    public static boolean Srcasem(OutputMsg o){
+        if(o.getReview().getRating()-o.getSentiment()>2)
+            return true;
+
+        return false;
     }
 
 }
