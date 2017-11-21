@@ -77,7 +77,7 @@ If we detect a failed SendMessage action, we will retry sending as many times as
 
 **Question:** Threads in your application, when is it a good idea? When is it bad?
 
-**Answer:** The manager uses a fixedThreadPool with a constant "z" that we choose. we have the class SQSThread , the manager sets on this thread , and his purpose is to wait all the time for new messages from the localup. once a new message received, the SQSThread detects it , and then the Manager sets on another thread to parse the message. using the thread pool and the ManagerThread class , the manager sets on a thread for every meesage (we have "z" threads available).
+**Answer:** The manager uses a fixedThreadPool with a constant "z" that we choose. we have the class SQSThread , the manager sets on this thread , and his purpose is to wait all the time for new messages from the localapp. once a new message received, the SQSThread detects it , and then the Manager sets on another thread to parse the message. using the thread pool and the ManagerThread class , the manager sets on a thread for every meesage (we have "z" threads available).
 In this way , we can process a big amount of messages while not overloading the system.
 IF there are more than "z' messages , the program will wait until some thread will finish his job , and than we will process the message.
 
