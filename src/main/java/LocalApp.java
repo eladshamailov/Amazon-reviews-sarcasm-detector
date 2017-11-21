@@ -24,9 +24,6 @@ import com.sun.prism.paint.Color;
 import org.json.simple.JSONObject;
 
 import javax.swing.text.html.HTML;
-
-import static j2html.TagCreator.*;
-
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
