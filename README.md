@@ -13,7 +13,11 @@ Next, we have to upload the following zip files to our bucket:
 
 2.worker.zip
 
-Now, we need to run this line in the terminal with the names of our input files and the N we chose.
+Now, we need to run this line in the terminal with the names of our input files and the n we chose.
 ```
 java -jar Assignment1.jar inputFileName1… inputFileNameN outputFileName1… outputFileNameN n
+```
+ if we want to terminate the manager:
+ ```
+ java  -jar Assignment1.jar inputFileName1… inputFileNameN outputFileName1… outputFileNameNn terminate
 ```
