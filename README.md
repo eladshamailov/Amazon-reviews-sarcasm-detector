@@ -46,11 +46,14 @@ we are using json to read and write the information in more convenient way.
 The SQSthread detects it and than the manager downloads the message using the SQSthread
 * Using the fixedThreadPool, the manager sets on the managerThread , which parses the downloaded messages.
 
-* @TODO: add more detailes about how the program works *
+**@TODO: add more detailes about how the program works**
 
 
 ## Instances and performances
 The instance we are using in the program is "ami-e535c59d" and the type is "micro".
 
-After inserting the input files , it took our program ### TODO time to finish the work on them
+After inserting the input files , it took our program **@TODO insert time** time to finish the work on them.
+
+The n we used is: **@TODO: insert the n we used** 
+
 
