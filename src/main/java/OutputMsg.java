@@ -1,45 +1,28 @@
 import java.util.ArrayList;
 
 public class OutputMsg {
-    Review review;
-    int sentiment;
-    ArrayList<String> extractedEntities;
+    ReviewRespons reviewRespons;
     boolean lastMsg;
 
-    public OutputMsg(Review review, int sentiment, ArrayList<String> extractedEntities) {
-        this.review = review;
-        this.sentiment = sentiment;
-        this.extractedEntities = extractedEntities;
-        this.lastMsg=false;
+    public OutputMsg(ReviewRespons reviewRespons, int sentiment) {
+        this.reviewRespons = reviewRespons;
+        this.lastMsg = false;
     }
 
-    public Review getReview() {
-        return review;
+    public ReviewRespons getReviewRespons() {
+        return reviewRespons;
     }
 
-    public void setReview(Review review) {
-        this.review = review;
+    public void setReviewRespons(ReviewRespons reviewRespons) {
+        this.reviewRespons = reviewRespons;
     }
 
-    public int getSentiment() {
-        return sentiment;
-    }
-
-    public void setSentiment(int sentiment) {
-        this.sentiment = sentiment;
-    }
-
-    public ArrayList<String> getExtractedEntities() {
-        return extractedEntities;
-    }
-
-    public void setExtractedEntities(ArrayList<String> extractedEntities) {
-        this.extractedEntities = extractedEntities;
-    }
-    public boolean getLastMsg(){
+    public boolean isLastMsg() {
         return lastMsg;
     }
-    public void setLastMsg(boolean n){
-        lastMsg=n;
+
+    public void setLastMsg(boolean lastMsg) {
+        this.lastMsg = lastMsg;
     }
+
 }

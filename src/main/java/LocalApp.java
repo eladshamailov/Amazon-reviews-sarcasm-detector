@@ -1,6 +1,7 @@
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.EnvironmentVariableCredentialsProvider;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2AsyncClient;
@@ -30,10 +31,7 @@ import static j2html.TagCreator.*;
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-import java.util.Vector;
+import java.util.*;
 
 public class LocalApp {
     public static AmazonS3 S3;
@@ -51,29 +49,20 @@ public class LocalApp {
     public static boolean Terminate=  false;
 
     public static void main(String[] args) throws Exception {
-        Review review=new Review("R14D3WP6J91DCU","\"https://www.amazon.com/gp/customer-reviews/R14D3WP6J91DCU/ref=cm_cr_arp_d_rvw_ttl?ie=UTF8&ASIN=0689835604","Five Stars","Super cute book. My son loves lifting the flaps",5,"Nikki", "2017-05-01T21:00:00.000Z");
-       ArrayList<String > s=new ArrayList<>();
-       s.add("mor");
-       s.add(" kjdsk");
-       s.add("djkj");
-        OutputMsg outputMsg=new OutputMsg(review,1,s);
-        createHTML(outputMsg);
-//        //init();
-//        startS3("C:\\Users\\Mor\\IdeaProjects\\Assignment1");
-//        UpToS3("C:/Users/Mor/IdeaProjects/docs");
-//        createQueue();
-//        sendMesage();
-//        while (!Terminate) {
-//            getOutput();
-//        }
-//        Terminate();
-
-
+        init();
+        startS3("C:\\Users\\Mor\\IdeaProjects\\Assignment1");
+        UpToS3("C:/Users/Mor/IdeaProjects/docs");
+        createQueue();
+        sendMesage();
+        while (!Terminate) {
+            getOutput();
+        }
+        Terminate();
     }
+
     //initilize and creating instance
     public static void init() {
-        credentialsProvider = new AWSStaticCredentialsProvider
-                (new ProfileCredentialsProvider().getCredentials());
+        credentialsProvider = new AWSStaticCredentialsProvider(new EnvironmentVariableCredentialsProvider().getCredentials());
         ec2 = AmazonEC2ClientBuilder.standard()
                 .withCredentials(credentialsProvider)
                 .withRegion("us-west-2")
@@ -82,9 +71,9 @@ public class LocalApp {
        System.out.println("the script for the Manager: "+s);
        if (!isActive()) {
             try {
-                request = new RunInstancesRequest("ami-e535c59d", 1, 1);
+                request = new RunInstancesRequest("ami-32d8124a", 1, 1);
                 request.setInstanceType(InstanceType.T2Micro.toString());
-                request.setUserData(s.getManagerScript());
+                request.withUserData(s.getManagerScript());
                 request.withKeyName("morKP");
                 request.withSecurityGroups("mor");
                 instances = ec2.runInstances(request).getReservation().getInstances();
@@ -225,7 +214,7 @@ public class LocalApp {
             sqs.sendMessage(new SendMessageRequest(AppToManager, gson.toJson(urlMsg).toString()));
         }
     }
-    //get an output from the queue
+//    //get an output from the queue
     public static void getOutput(){
         sqs.listQueues("ManagerToWorker").getQueueUrls().get(1);
         ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(MangerToApp);
@@ -238,7 +227,7 @@ public class LocalApp {
                 e.printStackTrace();
             }
         }
-        if(outputMsg.getLastMsg()==true){
+        if(outputMsg.isLastMsg()==true){
             System.out.println("this is the last Msg");
             Terminate=true;
         }
@@ -247,45 +236,45 @@ public class LocalApp {
     public static void createHTML(OutputMsg outputMsg) throws IOException {
         BufferedWriter bw = new BufferedWriter(new FileWriter(file));
         bw.write("<html>");
-
-
-        String s;
+        bw.write("<body>");
+        String html;
         StringBuilder builder= new StringBuilder();
-        ArrayList<String> extractedEntities=outputMsg.getExtractedEntities();
-        int i=0;
-        while (i<extractedEntities.size()){
-            builder.append(extractedEntities.get(i));
-            i++;
+        ReviewRespons reviewRespons=outputMsg.getReviewRespons();
+        Map<Review,List<String>> m=reviewRespons.getM();
+        ArrayList<String> htmlPrint=new ArrayList<>();
+        for (Map.Entry<Review, List<String>> entry : m.entrySet()) {
+            builder.append(entry.getKey().toString());
+            for (String ent:entry.getValue()) {
+                builder.append(ent);
+            }
+            boolean b=Srcasem(reviewRespons,entry.getKey());
+            if (b==true){
+                builder.append("This txt is sarcastic");
+            }
+            else {
+                builder.append("This txt is not sarcastic");
+            }
+            html =builder.toString();
+            switch (reviewRespons.sentiment) {
+                case 0:
+                    bw.write("<h2 style=background-color:DarkRed>" + html + "</h2>");
+                    break;
+                case 1:
+                    bw.write("<h2 style=background-color:red>" + html + "</h2>");
+                    break;
+                case 2:
+                    bw.write("<h2 style=background-color:black>" + html + "</h2>");
+                    break;
+                case 3:
+                    bw.write("<h2 style=background-color:LightGreen>" + html + "</h2>");
+                    break;
+                case 4:
+                    bw.write("<h2 style=background-color:DarkGreen>" + html + "</h2>");
+                    break;
+            }
         }
-        s="[ "+builder.toString()+" ]";
-        Review review= outputMsg.getReview();
-        boolean b=Srcasem(outputMsg);
-        String r;
-        if(b==true) {
-             r = review.getId()+" "+review.getLink()+review.getDate()+" "+ review.getRating()+review.getLink()+" "+review.getText() +" "+ " " + s+ " the text is srcasem";
-        }
-        else {
-            r = review.toString() + " " + s+ " the text isn't sracastic ";
-        }
-        switch (outputMsg.getSentiment()) {
-            case 0:
-                bw.write("<h2 style=background-color:DarkRed>" + r + "</h2>");
-                break;
-            case 1:
-                bw.write("<h2 style=background-color:red>" + r + "</h2>");
-                break;
-            case 2:
-                bw.write("<h2 style=background-color:black>" + r + "</h2>");
-                break;
-            case 3:
-                bw.write("<h2 style=background-color:LightGreen>" + r + "</h2>");
-                break;
-            case 4:
-                bw.write("<h2 style=background-color:DarkGreen>" + r + "</h2>");
-                break;
-        }
-        bw.write("</html>");
         bw.write("</body>");
+        bw.write("</html>");
         bw.close();
     }
 
@@ -295,10 +284,9 @@ public class LocalApp {
         sqs.sendMessage(new SendMessageRequest(AppToManager, gson.toJson(terminateMsg).toString()));
     }
 
-    public static boolean Srcasem(OutputMsg o){
-        if(o.getReview().getRating()-o.getSentiment()>2)
+    public static boolean Srcasem(ReviewRespons reviewRespons,Review review){
+        if(review.getRating()-reviewRespons.getSentiment()>2)
             return true;
-
         return false;
     }
 
