@@ -48,7 +48,7 @@ public class LocalApp {
     public static void main(String[] args) throws Exception {
         init();
         startS3("C:\\Users\\Mor\\IdeaProjects\\Assignment1");
-        UpToS3("C:/Users/Mor/IdeaProjects/docs");
+        UpToS3("C:/Users/win10/IdeaProjects/docs");
         createQueue();
         sendMesage();
         while (!Terminate) {
@@ -66,6 +66,9 @@ public class LocalApp {
                 .build();
        Script s=new Script(credentialsProvider.getCredentials().getAWSAccessKeyId(),credentialsProvider.getCredentials().getAWSSecretKey());
        System.out.println("the script for the Manager: "+s);
+        IamInstanceProfileSpecification instanceP=new IamInstanceProfileSpecification();
+//        instanceP.setName("DspAssignment1Role");
+        instanceP.setArn("arn:aws:iam::504703692217:instance-profile/DspAssignment1Role");
        if (!isActive()) {
             try {
                 request = new RunInstancesRequest("ami-32d8124a", 1, 1);
@@ -73,7 +76,12 @@ public class LocalApp {
                 request.withUserData(s.getManagerScript());
                 request.withKeyName("morKP");
                 request.withSecurityGroups("mor");
+//                instanceP.setName("DspAssignment1Role");
+//                instanceP.setArn("arn:aws:iam::504703692217:instance-profile/DspAssignment1Role");
+
+                request.setIamInstanceProfile(instanceP);
                 instances = ec2.runInstances(request).getReservation().getInstances();
+
                 System.out.println("create instances: " + instances);
 
             } catch (AmazonServiceException ase) {
