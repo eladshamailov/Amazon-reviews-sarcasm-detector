@@ -2,11 +2,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class ReviewRespons{
+public class ReviewResponse {
 Map<Review,List<String>> m;
 int sentiment;
 
-    public ReviewRespons(Map<Review, List<String>> m,int sentiment) {
+    public ReviewResponse(Map<Review, List<String>> m, int sentiment) {
         this.m = m;
         this.sentiment=sentiment;
     }

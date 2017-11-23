@@ -4,14 +4,11 @@ import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.EnvironmentVariableCredentialsProvider;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.services.ec2.AmazonEC2;
-import com.amazonaws.services.ec2.AmazonEC2AsyncClient;
-import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
 import com.amazonaws.services.ec2.model.*;
 import com.amazonaws.services.gamelift.model.DescribeInstancesRequest;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
-import com.amazonaws.services.s3.S3ClientOptions;
 import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.sqs.AmazonSQS;
@@ -21,13 +18,8 @@ import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
 import com.google.gson.Gson;
-import com.sun.prism.paint.Color;
-import org.json.simple.JSONObject;
 
-import javax.swing.text.html.HTML;
 import java.io.*;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 
 public class LocalApp {
@@ -67,8 +59,7 @@ public class LocalApp {
        Script s=new Script(credentialsProvider.getCredentials().getAWSAccessKeyId(),credentialsProvider.getCredentials().getAWSSecretKey());
        System.out.println("the script for the Manager: "+s);
         IamInstanceProfileSpecification instanceP=new IamInstanceProfileSpecification();
-//        instanceP.setName("DspAssignment1Role");
-        instanceP.setArn("arn:aws:iam::504703692217:instance-profile/DspAssignment1Role");
+//        instanceP.setArn("arn:aws:iam::504703692217:instance-profile/DspAssignment1Role");
        if (!isActive()) {
             try {
                 request = new RunInstancesRequest("ami-32d8124a", 1, 1);
@@ -76,10 +67,8 @@ public class LocalApp {
                 request.withUserData(s.getManagerScript());
                 request.withKeyName("morKP");
                 request.withSecurityGroups("mor");
-//                instanceP.setName("DspAssignment1Role");
-//                instanceP.setArn("arn:aws:iam::504703692217:instance-profile/DspAssignment1Role");
 
-                request.setIamInstanceProfile(instanceP);
+//                request.setIamInstanceProfile(instanceP);
                 instances = ec2.runInstances(request).getReservation().getInstances();
 
                 System.out.println("create instances: " + instances);
@@ -244,15 +233,15 @@ public class LocalApp {
         bw.write("<body>");
         String html;
         StringBuilder builder= new StringBuilder();
-        ReviewRespons reviewRespons=outputMsg.getReviewRespons();
-        Map<Review,List<String>> m=reviewRespons.getM();
+        ReviewResponse reviewResponse =outputMsg.getReviewResponse();
+        Map<Review,List<String>> m= reviewResponse.getM();
         ArrayList<String> htmlPrint=new ArrayList<>();
         for (Map.Entry<Review, List<String>> entry : m.entrySet()) {
             builder.append(entry.getKey().toString());
             for (String ent:entry.getValue()) {
                 builder.append(ent);
             }
-            boolean b=Srcasem(reviewRespons,entry.getKey());
+            boolean b=Srcasem(reviewResponse,entry.getKey());
             if (b==true){
                 builder.append("This txt is sarcastic");
             }
@@ -260,7 +249,7 @@ public class LocalApp {
                 builder.append("This txt is not sarcastic");
             }
             html =builder.toString();
-            switch (reviewRespons.sentiment) {
+            switch (reviewResponse.sentiment) {
                 case 0:
                     bw.write("<h2 style=background-color:DarkRed>" + html + "</h2>");
                     break;
@@ -289,8 +278,8 @@ public class LocalApp {
         sqs.sendMessage(new SendMessageRequest(AppToManager, gson.toJson(terminateMsg).toString()));
     }
 
-    public static boolean Srcasem(ReviewRespons reviewRespons,Review review){
-        if(review.getRating()-reviewRespons.getSentiment()>2)
+    public static boolean Srcasem(ReviewResponse reviewResponse, Review review){
+        if(review.getRating()- reviewResponse.getSentiment()>2)
             return true;
         return false;
     }

@@ -1,20 +1,18 @@
-import java.util.ArrayList;
-
 public class OutputMsg {
-    ReviewRespons reviewRespons;
+    ReviewResponse reviewResponse;
     boolean lastMsg;
 
-    public OutputMsg(ReviewRespons reviewRespons, int sentiment) {
-        this.reviewRespons = reviewRespons;
+    public OutputMsg(ReviewResponse reviewResponse, int sentiment) {
+        this.reviewResponse = reviewResponse;
         this.lastMsg = false;
     }
 
-    public ReviewRespons getReviewRespons() {
-        return reviewRespons;
+    public ReviewResponse getReviewResponse() {
+        return reviewResponse;
     }
 
-    public void setReviewRespons(ReviewRespons reviewRespons) {
-        this.reviewRespons = reviewRespons;
+    public void setReviewResponse(ReviewResponse reviewResponse) {
+        this.reviewResponse = reviewResponse;
     }
 
     public boolean isLastMsg() {
