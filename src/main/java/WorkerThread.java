@@ -1,11 +1,9 @@
-import com.amazon.sqs.javamessaging.AmazonSQSMessagingClientWrapper;
 import com.amazon.sqs.javamessaging.ProviderConfiguration;
 import com.amazon.sqs.javamessaging.SQSConnection;
 import com.amazon.sqs.javamessaging.SQSConnectionFactory;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
-import com.amazonaws.services.sqs.model.ListQueuesResult;
 import com.google.gson.Gson;
 
 import javax.jms.*;
@@ -55,13 +53,13 @@ public class WorkerThread implements Runnable {
     private void createOutputMsg(Message message) {
         try {
             ReviewResponse r = new Gson().fromJson(((TextMessage) message).getText(), ReviewResponse.class);
-            Manager.files.put(r.getReview().getFilenNme(), Manager.files.get(r.getReview().getFilenNme()) - 1);
-            BufferedWriter bw = new BufferedWriter(new FileWriter(r.getReview().getFilenNme(), true));
+            Manager.files.put(r.getReview().getFileName(), Manager.files.get(r.getReview().getFileName()) - 1);
+            BufferedWriter bw = new BufferedWriter(new FileWriter(r.getReview().getFileName(), true));
             bw.write(r.toString());
             bw.newLine();
             bw.flush();
             bw.close();
-            if(Manager.files.get(r.getReview().getFilenNme())==0){
+            if(Manager.files.get(r.getReview().getFileName())==0){
               //  Manager.UpToS3();
             }
         } catch (IOException e) {

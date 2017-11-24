@@ -1,7 +1,3 @@
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
-
 public class Review {
 private String id;
 private String link;
@@ -10,7 +6,7 @@ private String text;
 private int rating;
 private String author;
 private String date;
-private String filenNme;
+private String fileName;
 
     public Review(String id, String link, String title, String text, int rating, String author, String date) {
         this.id = id;
@@ -78,12 +74,12 @@ private String filenNme;
         this.date = date;
     }
 
-    public String getFilenNme() {
-        return filenNme;
+    public String getFileName() {
+        return fileName;
     }
 
-    public void setFilenNme(String filenNme) {
-        this.filenNme = filenNme;
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
     }
 
     @Override

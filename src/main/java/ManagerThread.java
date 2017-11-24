@@ -6,14 +6,11 @@ import com.amazonaws.services.s3.model.*;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.GetQueueAttributesRequest;
 import com.amazonaws.services.sqs.model.GetQueueAttributesResult;
-import com.amazonaws.services.sqs.model.QueueAttributeName;
 import com.google.gson.Gson;
-import com.sun.javafx.fxml.ParseTraceElement;
 
 
 import javax.jms.*;
 import java.io.*;
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -121,7 +118,7 @@ public class ManagerThread implements Runnable {
             String line = reader.readLine();
             while (line != null) {
                 Review review = gson.fromJson(line, Review.class);
-                review.setFilenNme(url);
+                review.setFileName(url);
                 TextMessage message = session.createTextMessage(gson.toJson(review).toString());
                 producer.send(message);
                 Manager.files.put(url, Manager.files.get(url).intValue() + 1);
