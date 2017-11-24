@@ -1,21 +1,31 @@
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
-public class ReviewRespons{
-Map<Review,List<String>> m;
-int sentiment;
+public class ReviewRespons {
+    Review review;
+    List<String> m;
+    int sentiment;
+    boolean sarcasm;
 
-    public ReviewRespons(Map<Review, List<String>> m,int sentiment) {
+    public ReviewRespons(Review review, List<String> m, int sentiment, boolean sarcasm) {
+        this.review = review;
         this.m = m;
-        this.sentiment=sentiment;
+        this.sentiment = sentiment;
+        this.sarcasm=sarcasm;
     }
 
-    public Map<Review, List<String>> getM() {
+    public Review getReview() {
+        return review;
+    }
+
+    public void setReview(Review review) {
+        this.review = review;
+    }
+
+    public List<String> getM() {
         return m;
     }
 
-    public void setM(Map<Review, List<String>> m) {
+    public void setM(List<String> m) {
         this.m = m;
     }
 
@@ -26,4 +36,21 @@ int sentiment;
     public void setSentiment(int sentiment) {
         this.sentiment = sentiment;
     }
+
+    public boolean isSarcasm() {
+        return sarcasm;
+    }
+
+    public void setSarcasm(boolean sarcasm) {
+        this.sarcasm = sarcasm;
+    }
+    @Override
+    public String toString() {
+        String s = review.toString() + " ";
+        for (String na : m) {
+            s = na + " ";
+        }
+        return s;
+    }
+
 }

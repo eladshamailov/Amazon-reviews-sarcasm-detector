@@ -1,7 +1,9 @@
 public enum Actions {
     TERMINATE,
     URL,
-    REVIEW;
+    REVIEW,
+    OUTPUT,
+    WORKERNUM;
 
      public static  int fromInt ( String a){
         switch (a) {
@@ -11,6 +13,10 @@ public enum Actions {
                 return 1;
             case "REVIEW":
                 return 2;
+            case "OUTPUT":
+                return 3;
+            case "WORKERNUM":
+                return 4;
         }
         return -1;
     }

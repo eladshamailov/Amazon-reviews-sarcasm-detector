@@ -76,4 +76,10 @@ private String date;
     public void setDate(String date) {
         this.date = date;
     }
+
+    @Override
+    public String toString() {
+        String s =id+" "+text+" "+link+" "+text+" "+rating+" "+author+" "+date;
+        return s;
+    }
 }

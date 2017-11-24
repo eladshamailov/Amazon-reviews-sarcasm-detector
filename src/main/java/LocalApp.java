@@ -1,72 +1,68 @@
+import com.amazon.sqs.javamessaging.AmazonSQSMessagingClientWrapper;
+import com.amazon.sqs.javamessaging.ProviderConfiguration;
+import com.amazon.sqs.javamessaging.SQSConnection;
+import com.amazon.sqs.javamessaging.SQSConnectionFactory;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.EnvironmentVariableCredentialsProvider;
-import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.services.ec2.AmazonEC2;
-import com.amazonaws.services.ec2.AmazonEC2AsyncClient;
-import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
 import com.amazonaws.services.ec2.model.*;
 import com.amazonaws.services.gamelift.model.DescribeInstancesRequest;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
-import com.amazonaws.services.s3.S3ClientOptions;
 import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.s3.model.PutObjectRequest;
-import com.amazonaws.services.sqs.AmazonSQS;
+import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
-import com.amazonaws.services.sqs.model.CreateQueueRequest;
-import com.amazonaws.services.sqs.model.Message;
-import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
-import com.amazonaws.services.sqs.model.SendMessageRequest;
 import com.google.gson.Gson;
-import com.sun.prism.paint.Color;
-import org.json.simple.JSONObject;
-
-import javax.swing.text.html.HTML;
+import javax.jms.*;
 import java.io.*;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 
 public class LocalApp {
     public static AmazonS3 S3;
     public static AmazonEC2 ec2;
-    public static AmazonSQS sqs;
+    public static Map<String, String> arguments;
+    public static SQSConnectionFactory connectionFactory;
     public static RunInstancesRequest request;
     public static List<Instance> instances;
     public static String listOfin;
     public static String bucketName;
     public static AWSCredentialsProvider credentialsProvider;
-    public static Vector<String> keys=new Vector<String>() ;
-    public static String MangerToApp;
-    public static String AppToManager;
-    public  static File file = new File("test.htm");
-    public static boolean Terminate=  false;
+    public static Vector<String> keys = new Vector<String>();
+    public static boolean terminate = false;
+    private static UUID uuid;
+    private static int workersNum;
+    private static int numberOfFiles;
+
 
     public static void main(String[] args) throws Exception {
-        init();
+        init(args);
         startS3("C:\\Users\\Mor\\IdeaProjects\\Assignment1");
         UpToS3("C:/Users/Mor/IdeaProjects/docs");
         createQueue();
+        Terminate();
+        sendWorkersNumMessage();
         sendMesage();
-        while (!Terminate) {
+        while (numberOfFiles > 0) {
             getOutput();
         }
-        Terminate();
     }
 
     //initilize and creating instance
-    public static void init() {
+    public static void init(String[] args) {
+        createMap(args);
+        uuid = UUID.randomUUID();
         credentialsProvider = new AWSStaticCredentialsProvider(new EnvironmentVariableCredentialsProvider().getCredentials());
         ec2 = AmazonEC2ClientBuilder.standard()
                 .withCredentials(credentialsProvider)
                 .withRegion("us-west-2")
                 .build();
-       Script s=new Script(credentialsProvider.getCredentials().getAWSAccessKeyId(),credentialsProvider.getCredentials().getAWSSecretKey());
-       System.out.println("the script for the Manager: "+s);
-       if (!isActive()) {
+        Script s = new Script(credentialsProvider.getCredentials().getAWSAccessKeyId(), credentialsProvider.getCredentials().getAWSSecretKey());
+        System.out.println("the script for the Manager: " + s);
+        if (!isActive()) {
             try {
                 request = new RunInstancesRequest("ami-32d8124a", 1, 1);
                 request.setInstanceType(InstanceType.T2Micro.toString());
@@ -85,6 +81,7 @@ public class LocalApp {
         }
     }
 
+    //check if the managet is active- return true/false
     public static boolean isActive() {
         DescribeInstancesRequest dis = new DescribeInstancesRequest();
         listOfin = dis.getInstanceId();
@@ -108,10 +105,44 @@ public class LocalApp {
         }
         return false;
     }
+    //create a input-output map
+    public static void createMap(String[] args) {
+        arguments = new HashMap<String, String>();
+        int length = 0;
+        if (args[args.length - 1].toLowerCase().equals("terminate")) {
+            terminate = true;
+            // terminate arg was supplied - second from end arg is # of workers
+            workersNum = Integer.parseInt(args[args.length - 2]);
+            length = (args.length - 2) / 2;
+        } else { //no terminate arg, last arg is # of workers
+            workersNum = Integer.parseInt(args[args.length - 1]);
+            length = (args.length - 1) / 2;
+        }
 
+        for (int i = 0; i < length; i++) {
+            arguments.put(args[i], args[length + i]);
+        }
+        numberOfFiles = arguments.size();
+    }
+    //send the num of workers
+    private static void sendWorkersNumMessage() {
+        WorkersNumMsg workersNumMsg = new WorkersNumMsg(workersNum,uuid);
+        Gson gson = new Gson();
+        Connection connection = null;
+        try {
+            connection = connectionFactory.createConnection();
+            Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+            MessageProducer producer = session.createProducer(session.createQueue("AppToManager"));
+            TextMessage message = session.createTextMessage(gson.toJson(workersNumMsg).toString());
+            producer.send(message);
+        } catch (JMSException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    //create a connection to the S3
     public static void startS3(String directoryName) {
-//        credentialsProvider =
-//                new AWSStaticCredentialsProvider(new ProfileCredentialsProvider().getCredentials());
         S3 = AmazonS3ClientBuilder.standard()
                 .withCredentials(credentialsProvider)
                 .withRegion("us-west-2")
@@ -145,18 +176,21 @@ public class LocalApp {
         }
     }
 
+    //upload the files to S3
     public static void UpToS3(String directoryName) {
         try {
             System.out.println("Uploading a new object to S3 from a file");
             int i = 0;
             File dir = new File(directoryName);
             for (File file : dir.listFiles()) {
-                keys.add(file.getName().replace
-                        ('\\', '-').replace('/', '-').
-                        replace(':', '-'));
-                PutObjectRequest req = new PutObjectRequest(bucketName, keys.elementAt(i), file);
-                S3.putObject(req);
-                i++;
+                if (arguments.containsKey(file.getName())) {
+                    keys.add(file.getName().replace
+                            ('\\', '-').replace('/', '-').
+                            replace(':', '-'));
+                    PutObjectRequest req = new PutObjectRequest(bucketName, keys.elementAt(i), file);
+                    S3.putObject(req);
+                    i++;
+                }
             }
         } catch (AmazonServiceException ace) {
             System.out.println("Uploading");
@@ -168,91 +202,105 @@ public class LocalApp {
         }
     }
 
-//create the queues for manager- localApp communication
+    //create the queues for manager- localApp communication
     public static void createQueue() {
-//        credentialsProvider =
-//                new AWSStaticCredentialsProvider(new ProfileCredentialsProvider().getCredentials());
         System.out.println("start a connection with the sqs");
-        AmazonSQS sqs = AmazonSQSClientBuilder.standard()
-                .withCredentials(credentialsProvider)
-                .withRegion("us-west-2")
-                .build();
+        connectionFactory = new SQSConnectionFactory(
+                new ProviderConfiguration(),
+                AmazonSQSClientBuilder.standard()
+                        .withRegion("us-west-2")
+                        .withCredentials(credentialsProvider)
+        );
         System.out.println("===========================================");
         System.out.println("Getting Started with Amazon SQS");
         System.out.println("===========================================\n");
-
         System.out.println("Creating a new SQS queue called MangerToApp.\n");
-        CreateQueueRequest createQueueRequest1 = new CreateQueueRequest
-                ("MangerToApp" + UUID.randomUUID());
-        MangerToApp = sqs.createQueue(createQueueRequest1).getQueueUrl();
-        System.out.println("Creating a new SQS queue called AppToManager.\n");
-        CreateQueueRequest createQueueRequest2 = new CreateQueueRequest
-                ("AppToManager" + UUID.randomUUID());
-        AppToManager = sqs.createQueue(createQueueRequest2).getQueueUrl();
-        //list queue
-        System.out.println("Listing all queues in your account.\n");
-        for (String queue : sqs.listQueues().getQueueUrls()) {
-            System.out.println("  QueueUrl: " + queue);
+        try {
+            SQSConnection connection = connectionFactory.createConnection();
+            AmazonSQSMessagingClientWrapper client = connection.getWrappedAmazonSQSClient();
+            System.out.println("Creating a new SQS queue called ManagerToApp.\n");
+            if (!client.queueExists("ManagerToApp" + uuid.toString().toLowerCase())) {
+                client.createQueue("ManagerToApp" + uuid.toString().toLowerCase());
+            }
+            System.out.println("Creating a new SQS queue called AppToManager.\n");
+            if (!client.queueExists(("AppToManager"))) {
+                client.createQueue("AppToManager");
+            }
+
+        } catch (JMSException e) {
+            e.printStackTrace();
         }
-        System.out.println();
+
     }
+
     //send a URLmsg
     public static void sendMesage() {
-        credentialsProvider=new AWSStaticCredentialsProvider(new ProfileCredentialsProvider().getCredentials());
-        sqs = AmazonSQSClientBuilder.standard()
-                .withCredentials(credentialsProvider)
-                .withRegion("us-west-2")
-                .build();
-        for (int i = 0; i < keys.size(); i++) {
-            System.out.println("Sending a " + i + "message to ApptoMamager\n");
-            System.out.println("the key:"+keys.elementAt(i).toString());
-            UrlMsg urlMsg = new UrlMsg(bucketName,keys.elementAt(i),S3.getUrl(bucketName,keys.elementAt(i)).toString());
-            Gson gson=new Gson();
-            sqs.sendMessage(new SendMessageRequest(AppToManager, gson.toJson(urlMsg).toString()));
+        SQSConnectionFactory connectionFactory = new SQSConnectionFactory(
+                new ProviderConfiguration(),
+                AmazonSQSClientBuilder.standard()
+                        .withRegion("us-west-2")
+                        .withCredentials(credentialsProvider)
+        );
+        Connection connection = null;
+        try {
+            connection = connectionFactory.createConnection();
+            Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+            MessageProducer producer = session.createProducer(session.createQueue("AppToManager"));
+            for (int i = 0; i < keys.size(); i++) {
+                System.out.println("Sending a " + i + "message to ApptoMamager\n");
+                System.out.println("the key:" + keys.elementAt(i).toString());
+                UrlMsg urlMsg = new UrlMsg(bucketName, keys.elementAt(i), S3.getUrl(bucketName, keys.elementAt(i)).toString(), uuid);
+                Gson gson = new Gson();
+                TextMessage message = session.createTextMessage(gson.toJson(urlMsg).toString());
+                producer.send(message);
+            }
+        } catch (JMSException e) {
+            e.printStackTrace();
         }
     }
-//    //get an output from the queue
-    public static void getOutput(){
-        sqs.listQueues("ManagerToWorker").getQueueUrls().get(1);
-        ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(MangerToApp);
-        List<Message> tmp = Manager.sqs.receiveMessage(receiveMessageRequest).getMessages();
-        OutputMsg outputMsg = new Gson().fromJson(tmp.get(0).getBody().toString(), OutputMsg.class);
-        if(tmp.size()>0){
-            try {
-                createHTML(outputMsg);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        if(outputMsg.isLastMsg()==true){
-            System.out.println("this is the last Msg");
-            Terminate=true;
+
+
+    //get an output from the queue
+    public static void getOutput() {
+        Message message = null;
+        try {
+            SQSConnection connection = connectionFactory.createConnection();
+            Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+            AmazonSQSMessagingClientWrapper client = connection.getWrappedAmazonSQSClient();
+            MessageConsumer consumer = session.createConsumer(session.createQueue("ManagerToApp" + uuid.toString()));
+            connection.start();
+            message = consumer.receive();
+            OutputMsg outputMsg = new Gson().fromJson(((TextMessage) message).getText(), OutputMsg.class);
+            createHTML(outputMsg);
+        } catch (JMSException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
     public static void createHTML(OutputMsg outputMsg) throws IOException {
-        BufferedWriter bw = new BufferedWriter(new FileWriter(file));
+        File file = getFromS3(outputMsg.getUrl());
+        FileReader fileReader = new FileReader(file);
+        BufferedReader bufferedReader = new BufferedReader(fileReader);
+        StringBuffer stringBuffer = new StringBuffer();
+        String line;
+        BufferedWriter bw = new BufferedWriter(new FileWriter(arguments.get(outputMsg.getFileName())));
         bw.write("<html>");
         bw.write("<body>");
-        String html;
-        StringBuilder builder= new StringBuilder();
-        ReviewRespons reviewRespons=outputMsg.getReviewRespons();
-        Map<Review,List<String>> m=reviewRespons.getM();
-        ArrayList<String> htmlPrint=new ArrayList<>();
-        for (Map.Entry<Review, List<String>> entry : m.entrySet()) {
-            builder.append(entry.getKey().toString());
-            for (String ent:entry.getValue()) {
-                builder.append(ent);
-            }
-            boolean b=Srcasem(reviewRespons,entry.getKey());
-            if (b==true){
+        Gson gson = new Gson();
+        while ((line = bufferedReader.readLine()) != null) {
+            String html;
+            StringBuilder builder = new StringBuilder();
+            ReviewRespons reviewRespons = gson.fromJson(line, ReviewRespons.class);
+            builder.append(reviewRespons.toString());
+            if (reviewRespons.isSarcasm() == true) {
                 builder.append("This txt is sarcastic");
-            }
-            else {
+            } else {
                 builder.append("This txt is not sarcastic");
             }
-            html =builder.toString();
-            switch (reviewRespons.sentiment) {
+            html = builder.toString();
+            switch (reviewRespons.getSentiment()) {
                 case 0:
                     bw.write("<h2 style=background-color:DarkRed>" + html + "</h2>");
                     break;
@@ -273,21 +321,44 @@ public class LocalApp {
         bw.write("</body>");
         bw.write("</html>");
         bw.close();
+        numberOfFiles--;
     }
 
-    public static void Terminate(){
-        TerminateMsg terminateMsg = new TerminateMsg();
-        Gson gson=new Gson();
-        sqs.sendMessage(new SendMessageRequest(AppToManager, gson.toJson(terminateMsg).toString()));
+    private static File getFromS3(String url) {
+        File file = new File("localFile.txt");
+        S3Object obj = S3.getObject(bucketName, url);
+        InputStream reader = new BufferedInputStream(
+                obj.getObjectContent());
+        OutputStream writer = null;
+        try {
+            writer = new BufferedOutputStream(new FileOutputStream(file));
+            int read = -1;
+
+            while ((read = reader.read()) != -1) {
+                writer.write(read);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return file;
     }
 
-    public static boolean Srcasem(ReviewRespons reviewRespons,Review review){
-        if(review.getRating()-reviewRespons.getSentiment()>2)
-            return true;
-        return false;
-    }
 
+    public static void Terminate() {
+        TerminateMsg terminateMsg = new TerminateMsg(uuid);
+        Gson gson = new Gson();
+        Connection connection = null;
+        try {
+            connection = connectionFactory.createConnection();
+            Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+            MessageProducer producer = session.createProducer(session.createQueue("AppToManager"));
+            TextMessage message = session.createTextMessage(gson.toJson(terminateMsg).toString());
+            producer.send(message);
+        } catch (JMSException e) {
+            e.printStackTrace();
+        }
+
+    }
 }
-
 
 

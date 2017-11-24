@@ -1,13 +1,18 @@
+import java.util.UUID;
+
 public class UrlMsg extends Msg {
     String bucketName;
     String key;
     String URL;
 
-    public UrlMsg(String bucketName, String key, String URL) {
+
+    public UrlMsg(String bucketName, String key, String URL, UUID uuid) {
         super.action = Actions.URL.ordinal();
+        super.uuid=uuid;
         this.bucketName = bucketName;
         this.key = key;
         this.URL = URL;
+
     }
 
     public String getBucketName() {
@@ -33,5 +38,11 @@ public class UrlMsg extends Msg {
     public void setURL(String URL) {
         this.URL = URL;
     }
+
+    public String toString(){
+        String s=bucketName+" "+key+" "+URL;
+        return s;
+    }
+
 }
 

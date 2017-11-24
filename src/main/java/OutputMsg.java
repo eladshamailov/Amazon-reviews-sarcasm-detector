@@ -1,28 +1,30 @@
 import java.util.ArrayList;
+import java.util.UUID;
 
-public class OutputMsg {
-    ReviewRespons reviewRespons;
-    boolean lastMsg;
+public class OutputMsg extends Msg {
+    String url;
+    String fileName;
 
-    public OutputMsg(ReviewRespons reviewRespons, int sentiment) {
-        this.reviewRespons = reviewRespons;
-        this.lastMsg = false;
+    public OutputMsg(String url, String fileName, UUID uuid) {
+        super.action=Actions.OUTPUT.ordinal();
+        super.uuid=uuid;
+        this.url = url;
+        this.fileName=fileName;
     }
 
-    public ReviewRespons getReviewRespons() {
-        return reviewRespons;
+    public String getUrl() {
+        return url;
     }
 
-    public void setReviewRespons(ReviewRespons reviewRespons) {
-        this.reviewRespons = reviewRespons;
+    public void setUrl(String url) {
+        this.url = url;
     }
 
-    public boolean isLastMsg() {
-        return lastMsg;
+    public String getFileName() {
+        return fileName;
     }
 
-    public void setLastMsg(boolean lastMsg) {
-        this.lastMsg = lastMsg;
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
     }
-
 }
