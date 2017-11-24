@@ -1,20 +1,30 @@
+import com.amazon.sqs.javamessaging.AmazonSQSMessagingClientWrapper;
 import com.amazon.sqs.javamessaging.ProviderConfiguration;
+import com.amazon.sqs.javamessaging.SQSConnection;
 import com.amazon.sqs.javamessaging.SQSConnectionFactory;
 import com.amazonaws.services.s3.model.*;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
+import com.amazonaws.services.sqs.model.GetQueueAttributesRequest;
+import com.amazonaws.services.sqs.model.GetQueueAttributesResult;
+import com.amazonaws.services.sqs.model.QueueAttributeName;
 import com.google.gson.Gson;
+import com.sun.javafx.fxml.ParseTraceElement;
+
 
 import javax.jms.*;
 import java.io.*;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ManagerThread implements Runnable {
+    private static int numActiveWorker=0;
     S3Object obj;
     public static AtomicBoolean doWork = new AtomicBoolean(false);
     List<Bucket> bucketList;
+
 
     @Override
     public void run() {
@@ -111,6 +121,7 @@ public class ManagerThread implements Runnable {
             String line = reader.readLine();
             while (line != null) {
                 Review review = gson.fromJson(line, Review.class);
+                review.setFilenNme(url);
                 TextMessage message = session.createTextMessage(gson.toJson(review).toString());
                 producer.send(message);
                 Manager.files.put(url, Manager.files.get(url).intValue() + 1);
@@ -132,13 +143,26 @@ public class ManagerThread implements Runnable {
                         .withRegion("us-west-2")
                         .withCredentials(Manager.credentialsProvider)
         );
-        Connection connection = null;
+        SQSConnection connection = null;
         try {
             connection = Manager.connectionFactory.createConnection();
-            Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-            MessageConsumer consumer = session.createConsumer(session.createQueue("ManagerToWorker"));
-            consumer.receive().
-    } catch (JMSException e) {
+            AmazonSQSMessagingClientWrapper client = connection.getWrappedAmazonSQSClient();
+            GetQueueAttributesRequest attReq = new GetQueueAttributesRequest();
+            attReq.setQueueUrl("ManagerToWorker");
+            ArrayList<String> attr = new ArrayList<>();
+            attr.add("ApproximateNumberOfMessages");
+            attReq.setAttributeNames(attr);
+            GetQueueAttributesResult response = client.getAmazonSQSClient().getQueueAttributes(attReq);
+            String messagesNum = response.getAttributes().get("ApproximateNumberOfMessages");
+            if (numActiveWorker==0||( Integer.parseInt(messagesNum)-numActiveWorker)>=Manager.numWorker.get()) {
+                int x= (Integer.parseInt(messagesNum)-numActiveWorker)-Manager.numWorker.get();
+                for (int i = 0; i < x; i++) {
+                    //Workers worker=new Workers();
+                }
+            }
+
+        } catch (JMSException e) {
             e.printStackTrace();
         }
     }
+}

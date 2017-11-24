@@ -44,7 +44,9 @@ public class LocalApp {
         startS3("C:\\Users\\Mor\\IdeaProjects\\Assignment1");
         UpToS3("C:/Users/win10/IdeaProjects/docs");
         createQueue();
-        Terminate();
+        if(terminate==true) {
+            Terminate();
+        }
         sendWorkersNumMessage();
         sendMesage();
         while (numberOfFiles > 0) {

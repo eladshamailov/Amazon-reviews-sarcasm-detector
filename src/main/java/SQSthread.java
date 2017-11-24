@@ -34,12 +34,9 @@ public class SQSthread implements Runnable {
 
             SQSConnection connection = Manager.connectionFactory.createConnection();
             Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-            AmazonSQSMessagingClientWrapper client = connection.getWrappedAmazonSQSClient();
-            ListQueuesResult l= client.getAmazonSQSClient().listQueues();
-            for (String s:l.getQueueUrls()) {
-                MessageConsumer consumer = session.createConsumer(session.createQueue(s));
-                 connection.start();
-                Message message;
+            MessageConsumer consumer = session.createConsumer(session.createQueue("AppToManager"));
+            connection.start();
+            Message message;
                while (true) {
                    while ((message = consumer.receive()) == null) {
                        System.out.println("There is no new msg");
@@ -50,7 +47,6 @@ public class SQSthread implements Runnable {
                    }
                    Manager.queue.add(message);
                }
-            }
         } catch (JMSException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
