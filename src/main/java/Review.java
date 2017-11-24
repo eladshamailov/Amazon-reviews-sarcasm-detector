@@ -10,6 +10,7 @@ private String text;
 private int rating;
 private String author;
 private String date;
+private String filenNme;
 
     public Review(String id, String link, String title, String text, int rating, String author, String date) {
         this.id = id;
@@ -75,6 +76,14 @@ private String date;
 
     public void setDate(String date) {
         this.date = date;
+    }
+
+    public String getFilenNme() {
+        return filenNme;
+    }
+
+    public void setFilenNme(String filenNme) {
+        this.filenNme = filenNme;
     }
 
     @Override
