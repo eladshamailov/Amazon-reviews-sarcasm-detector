@@ -16,6 +16,7 @@ import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
+import com.amazonaws.util.Base64;
 import com.google.gson.Gson;
 import javax.jms.*;
 import java.io.*;
@@ -44,7 +45,8 @@ public class LocalApp {
         startS3("C:\\Users\\Mor\\IdeaProjects\\Assignment1");
         UpToS3("C:/Users/win10/IdeaProjects/docs");
         createQueue();
-        Terminate();
+        if (terminate)
+            Terminate();
         sendWorkersNumMessage();
         sendMesage();
         while (numberOfFiles > 0) {
@@ -69,9 +71,9 @@ public class LocalApp {
             try {
                 request = new RunInstancesRequest("ami-32d8124a", 1, 1);
                 request.setInstanceType(InstanceType.T2Micro.toString());
-                request.withUserData(s.getManagerScript());
                 request.withKeyName("morKP");
                 request.withSecurityGroups("mor");
+                request.withUserData(s.getManagerScript());
 //                request.setIamInstanceProfile(instanceP);
                 instances = ec2.runInstances(request).getReservation().getInstances();
                 System.out.println("create instances: " + instances);
@@ -85,7 +87,7 @@ public class LocalApp {
         }
     }
 
-    //check if the managet is active- return true/false
+    //check if the manager is active- return true/false
     public static boolean isActive() {
         DescribeInstancesRequest dis = new DescribeInstancesRequest();
         listOfin = dis.getInstanceId();
@@ -262,7 +264,21 @@ public class LocalApp {
             e.printStackTrace();
         }
     }
-
+//    private String getUserData(String jarName) throws IOException {
+//        String script = "#!/bin/bash\n"
+//                + "BIN_DIR=/tmp\n"
+//                + "cd $BIN_DIR\n"
+//                + "wget https://s3.amazonaws.com/akiai3bmpkxyzm2gf4gamybucket/rootkey.zip\n"
+//                + "unzip -P awsswa rootkey.zip\n"
+//                + "wget https://s3.amazonaws.com/akiai3bmpkxyzm2gf4gamybucket/dsp1_v1_lib.zip\n"
+//                + "unzip dsp1_v1_lib.zip\n"
+//                + "wget http://repo1.maven.org/maven2/edu/stanford/nlp/stanford-corenlp/3.3.0/stanford-corenlp-3.3.0-models.jar\n"
+//                + "mv stanford-corenlp-3.3.0-models.jar dsp1_v1_lib\n"
+//                + "wget https://s3.amazonaws.com/akiai3bmpkxyzm2gf4gamybucket/" + jarName + "\n"
+//                + "java -jar -Xms768m -Xmx1024m $BIN_DIR/" + jarName;
+//        String str = new String(Base64.encode(script.getBytes()));
+//        return str;
+//    }
 
     //get an output from the queue
     public static void getOutput() {
