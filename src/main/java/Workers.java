@@ -24,9 +24,10 @@ public class Workers {
     public static String MangerToWorker;
     public static String WorkerToManager;
     public static boolean terminate = false;
+    public static SentimentAnalysis sentimentAnalysis;
+    public static NamedEntityRecognition namedEntityRecognition;
 
     public static void main(String [] args){
-       // SentimentAnalysis sentimentAnalysis=new SentimentAnalysis();
         initialize();
         getMsg();
     }
@@ -47,6 +48,8 @@ public class Workers {
         System.out.println("===========================================");
         System.out.println("Getting Started with Amazon SQS");
         System.out.println("===========================================\n");
+        sentimentAnalysis=new SentimentAnalysis();
+        namedEntityRecognition=new NamedEntityRecognition();
     }
 
     public static void getMsg() {
@@ -75,7 +78,7 @@ public class Workers {
                 }, 25000);
 
             workOnMsg(message);
-           // deleteMess(message);
+            deleteMess(message);
             }
 
         }
@@ -83,19 +86,18 @@ public class Workers {
     public static void workOnMsg(Message message){
         ReviewMsg reviewMsg = new Gson().fromJson(message.getBody(), ReviewMsg.class);
         for(Review review: reviewMsg.getReviews()){
-            SentimentAnalysis sentimentAnalysis=new SentimentAnalysis();
-            int reviewGrade= sentimentAnalysis.findSentiment(review.toString());
-            ArrayList<String> a=NamedEntityRecognition.printEntities(review.toString());
+            int reviewGrade= sentimentAnalysis.findSentiment(review.getText());
+            ArrayList<String> a=namedEntityRecognition.printEntities(review.getText());
             HashMap<Review,List<String>>  reviewMap=new HashMap<>();
             reviewMap.put(review,a);
             ReviewResponse reviewResponse=new ReviewResponse(reviewMap,reviewGrade);
             OutputMsg outputMsg=new OutputMsg(reviewResponse,reviewGrade);
-            sendMesage(outputMsg);
-            deleteMess(message);
+            sendMessage(outputMsg);
+            //deleteMess(message);
         }
 
     }
-    public static void sendMesage(OutputMsg outputMsg) {
+    public static void sendMessage(OutputMsg outputMsg) {
         credentialsProvider=new AWSStaticCredentialsProvider(new ProfileCredentialsProvider().getCredentials());
         sqs = AmazonSQSClientBuilder.standard()
                 .withCredentials(credentialsProvider)
