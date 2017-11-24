@@ -1,12 +1,12 @@
 import java.util.List;
 
-public class ReviewRespons {
+public class ReviewResponse {
     Review review;
     List<String> m;
     int sentiment;
     boolean sarcasm;
 
-    public ReviewRespons(Review review, List<String> m, int sentiment, boolean sarcasm) {
+    public ReviewResponse(Review review, List<String> m, int sentiment, boolean sarcasm) {
         this.review = review;
         this.m = m;
         this.sentiment = sentiment;
