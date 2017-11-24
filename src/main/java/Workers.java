@@ -78,7 +78,7 @@ public class Workers {
                 }, 25000);
 
             workOnMsg(message);
-            deleteMess(message);
+           // deleteMess(message);
             }
 
         }
