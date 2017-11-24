@@ -50,6 +50,8 @@ public class ReviewResponse {
         for (String na : m) {
             s = na + " ";
         }
+        s=s+" "+sentiment;
+        s=s+" "+sarcasm;
         return s;
     }
 

@@ -84,20 +84,14 @@ public class Workers {
         }
     }
     public static void workOnMsg(Message message){
-        ReviewMsg reviewMsg = new Gson().fromJson(message.getBody(), ReviewMsg.class);
-        for(Review review: reviewMsg.getReviews()){
+        Review review = new Gson().fromJson(message.getBody(), Review.class);
             int reviewGrade= sentimentAnalysis.findSentiment(review.getText());
             ArrayList<String> a=namedEntityRecognition.printEntities(review.getText());
-            HashMap<Review,List<String>>  reviewMap=new HashMap<>();
-            reviewMap.put(review,a);
-            ReviewResponse reviewResponse=new ReviewResponse(reviewMap,reviewGrade);
-            OutputMsg outputMsg=new OutputMsg(reviewResponse,reviewGrade);
-            sendMessage(outputMsg);
+            ReviewResponse reviewResponse=new ReviewResponse(review,a,reviewGrade,Math.abs(review.getRating()-reviewGrade)>2);
+            sendMessage(reviewResponse);
             //deleteMess(message);
-        }
-
     }
-    public static void sendMessage(OutputMsg outputMsg) {
+    public static void sendMessage(ReviewResponse reviewResponse) {
         credentialsProvider=new AWSStaticCredentialsProvider(new ProfileCredentialsProvider().getCredentials());
         sqs = AmazonSQSClientBuilder.standard()
                 .withCredentials(credentialsProvider)
@@ -105,7 +99,7 @@ public class Workers {
                 .build();
             System.out.println("Sending a message to WorkerToManager\n");
             Gson gson=new Gson();
-            sqs.sendMessage(new SendMessageRequest(WorkerToManager, gson.toJson(outputMsg).toString()));
+            sqs.sendMessage(new SendMessageRequest(WorkerToManager, gson.toJson(reviewResponse).toString()));
     }
 
     public static void deleteMess(Message message){
