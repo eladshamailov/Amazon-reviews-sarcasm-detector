@@ -33,6 +33,7 @@ public class LocalApp {
     public static AWSCredentialsProvider credentialsProvider;
     public static Vector<String> keys = new Vector<String>();
     public static boolean terminate = false;
+    public static IamInstanceProfileSpecification instanceP;
     private static UUID uuid;
     private static int workersNum;
     private static int numberOfFiles;
@@ -41,7 +42,7 @@ public class LocalApp {
     public static void main(String[] args) throws Exception {
         init(args);
         startS3("C:\\Users\\Mor\\IdeaProjects\\Assignment1");
-        UpToS3("C:/Users/Mor/IdeaProjects/docs");
+        UpToS3("C:/Users/win10/IdeaProjects/docs");
         createQueue();
         Terminate();
         sendWorkersNumMessage();
@@ -62,6 +63,8 @@ public class LocalApp {
                 .build();
         Script s = new Script(credentialsProvider.getCredentials().getAWSAccessKeyId(), credentialsProvider.getCredentials().getAWSSecretKey());
         System.out.println("the script for the Manager: " + s);
+//        instanceP=new IamInstanceProfileSpecification();
+//        instanceP.setArn("arn:aws:iam::504703692217:instance-profile/DspAssignment1Role");
         if (!isActive()) {
             try {
                 request = new RunInstancesRequest("ami-32d8124a", 1, 1);
@@ -69,6 +72,7 @@ public class LocalApp {
                 request.withUserData(s.getManagerScript());
                 request.withKeyName("morKP");
                 request.withSecurityGroups("mor");
+//                request.setIamInstanceProfile(instanceP);
                 instances = ec2.runInstances(request).getReservation().getInstances();
                 System.out.println("create instances: " + instances);
 
@@ -292,15 +296,15 @@ public class LocalApp {
         while ((line = bufferedReader.readLine()) != null) {
             String html;
             StringBuilder builder = new StringBuilder();
-            ReviewRespons reviewRespons = gson.fromJson(line, ReviewRespons.class);
-            builder.append(reviewRespons.toString());
-            if (reviewRespons.isSarcasm() == true) {
+            ReviewResponse reviewResponse = gson.fromJson(line, ReviewResponse.class);
+            builder.append(reviewResponse.toString());
+            if (reviewResponse.isSarcasm() == true) {
                 builder.append("This txt is sarcastic");
             } else {
                 builder.append("This txt is not sarcastic");
             }
             html = builder.toString();
-            switch (reviewRespons.getSentiment()) {
+            switch (reviewResponse.getSentiment()) {
                 case 0:
                     bw.write("<h2 style=background-color:DarkRed>" + html + "</h2>");
                     break;
