@@ -59,13 +59,17 @@ The n we used is: **@TODO: insert the n we used**
 ## Q&A
 **Question:** Did you think for more than 2 minutes about security?
 
-**Answer:** **@TODO: answer the question**
+**Answer:** We took security very serious.We never hard coded the credentials in the program ,we use the EnvironmentVariableCredentialsProvider to get the credentials.
+The zip file is encoded with a strong password , and decoded from the manager after it gets the zip.
+No one sends the credentials in plain text , not we and no where in the program.
+**@TODO:Add if we used custom ami/chain/enviroment varibales**
 
 **Question:** Did you think about scalability? Will your program work properly when 1 million clients connected at the same time? How about 2 million? 1 billion? Scalability is very important aspect of the system, is it scalable?
 
 **Answer:**  Yes , we thought about scalability. The manager works with fixedThreadPool , we set a constant numebr of threads: "z" and the manager executes the "ManagerThread" when we recieves new message.
 The program will work properly with a large amount of users ,because for each new user, we set it's own two queues. in this way , we can assure that for every client , the received message and the sent message will be the right answer and no problen shoule occur.
 We have to put in mind , that a large number of clients will really slow down the program , because of technical issues.
+**@TODO:change it , we edited the code**
 
 **Question:** What about persistence? What if a node dies? What if a node stalls for a while? Have you taken care of all possible outcomes in the system? Think of more possible issues that might arise from failures. What did you do to solve it? What about broken communications? Be sure to handle all fail-cases!
 
