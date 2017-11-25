@@ -5,6 +5,7 @@ import com.amazon.sqs.javamessaging.SQSConnectionFactory;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.auth.EnvironmentVariableCredentialsProvider;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
@@ -59,23 +60,23 @@ public class LocalApp {
     public static void init(String[] args) {
         createMap(args);
         uuid = UUID.randomUUID();
-        credentialsProvider = new AWSStaticCredentialsProvider(new EnvironmentVariableCredentialsProvider().getCredentials());
+//        credentialsProvider = new AWSStaticCredentialsProvider(new EnvironmentVariableCredentialsProvider().getCredentials());
         ec2 = AmazonEC2ClientBuilder.standard()
-                .withCredentials(credentialsProvider)
+                .withCredentials(DefaultAWSCredentialsProviderChain.getInstance())
                 .withRegion("us-west-2")
                 .build();
-        Script s = new Script(credentialsProvider.getCredentials().getAWSAccessKeyId(), credentialsProvider.getCredentials().getAWSSecretKey());
-        System.out.println("the script for the Manager: " + s);
-        instanceP=new IamInstanceProfileSpecification();
-        instanceP.setArn("arn:aws:iam::504703692217:instance-profile/DspAssignment1Role");
+        Script s = new Script();
+//        System.out.println("the script for the Manager: " + s);
+//        instanceP=new IamInstanceProfileSpecification();
+//        instanceP.setArn("arn:aws:iam::504703692217:instance-profile/DspAssignment1Role");
         if (!isActive()) {
             try {
                 request = new RunInstancesRequest("ami-32d8124a", 1, 1);
                 request.setInstanceType(InstanceType.T2Micro.toString());
                 request.withKeyName("eladKP");
                 request.withSecurityGroups("mor");
-                request.withUserData(s.getManagerScript());
-                request.setIamInstanceProfile(instanceP);
+//                request.withUserData(s.getManagerScript());
+//                request.setIamInstanceProfile(instanceP);
                 instances = ec2.runInstances(request).getReservation().getInstances();
                 System.out.println("create instances: " + instances);
 
