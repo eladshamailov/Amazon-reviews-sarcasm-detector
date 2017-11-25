@@ -86,7 +86,7 @@ It's also a bad idea to use threads in localapp, because it can cause us problem
 
 **Question:** Did you run more than one client at the same time? Be sure they work properly, and finish properly, and your results are correct.
 
-**Answer:**  **@TODO: answer the question**
+**Answer:**  Yes. We tried to run the program on a few clients , and it works properly with correct results.
 
 **Question:** Do you understand how the system works? Do a full run using pen and paper, draw the different parts and the communication that happens between them.
 
