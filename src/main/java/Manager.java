@@ -3,33 +3,25 @@ import com.amazon.sqs.javamessaging.ProviderConfiguration;
 import com.amazon.sqs.javamessaging.SQSConnection;
 import com.amazon.sqs.javamessaging.SQSConnectionFactory;
 import com.amazonaws.AmazonServiceException;
+import com.amazonaws.ClientConfigurationFactory;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
-import com.amazonaws.services.appstream.model.Session;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.PutObjectRequest;
-import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
-import com.amazonaws.services.sqs.model.*;
 import com.google.gson.Gson;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 
-import javax.jms.JMSException;
+import javax.jms.*;
 import java.io.*;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.*;
 
-import java.text.ParseException;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.jms.*;
-import javax.jms.Message;
 
 public class Manager {
     public static ConcurrentHashMap<String, Integer> files = new ConcurrentHashMap<>();
@@ -52,19 +44,59 @@ public class Manager {
         executorService = Executors.newFixedThreadPool(100);
         //create the job to execute
         Runnable sqsthread = new SQSthread();
-        Thread t1 = new Thread(sqsthread);
-        t1.run();
-        Runnable manager = new ManagerThread();
-        executorService.execute(manager);
-        Runnable WorkerTread=new WorkerThread();
-        Thread t2= new Thread(WorkerTread);
-        t2.run();
- //       UpToS3();
+        Thread t1 = new Thread(sqsthread , "SqsThread");
+        t1.start();
+        System.out.println("\n run t1 \n");
+        Runnable WorkerTread = new WorkerThread();
+        Thread t2 = new Thread(WorkerTread , "workThread");
+        t2.start();
+        System.out.println("\n run t2 \n");
+        work();
+        t1.interrupt();
+        t2.interrupt();
+        executorService.shutdownNow();
+       // deleteTheQueue();
+        //       UpToS3();
 //        while(true) {
 //            executor.execute(sqsthread);
 //            while (!SQSthread.doWork.get()) {
 //                Thread.currentThread().sleep(2000);
 //            }
+
+    }
+
+    private static void deleteTheQueue() {
+        connectionFactory = new SQSConnectionFactory(
+                new ProviderConfiguration(),
+                AmazonSQSClientBuilder.standard()
+                        .withRegion("us-west-2")
+                        .withCredentials(Manager.credentialsProvider)
+        );
+        try {
+            SQSConnection connection = connectionFactory.createConnection();
+            AmazonSQSMessagingClientWrapper client = connection.getWrappedAmazonSQSClient();
+            client.getAmazonSQSClient().deleteQueue("ManagerToWorker");
+            client.getAmazonSQSClient().deleteQueue("WorkerToManager");
+        } catch (JMSException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void work() {
+        System.out.println("\n run in work \n");
+        //Liad - added Q size > 0
+        while (!terminate || !files.isEmpty() || queue.size() > 0) {
+            int k = 0;
+            if (queue.size() > 100) {
+                k = 100;
+            } else {
+                k = queue.size();
+            }
+            for (int i = 0; i < k; i++) {
+                Runnable manager = new ManagerThread();
+                executorService.execute(manager);
+            }
+        }
 
     }
 
@@ -88,6 +120,12 @@ public class Manager {
                         .withRegion("us-west-2")
                         .withCredentials(Manager.credentialsProvider)
         );
+        System.out.println("========================");
+        System.out.println("connect to S3");
+        S3 = AmazonS3ClientBuilder.standard()
+                .withCredentials(credentialsProvider)
+                .withRegion("us-west-2")
+                .build();
     }
 
     //creating the Queues of the Worker-manager
@@ -95,9 +133,9 @@ public class Manager {
         try {
             SQSConnection connection = connectionFactory.createConnection();
             AmazonSQSMessagingClientWrapper client = connection.getWrappedAmazonSQSClient();
-            System.out.println("Creating a new SQS queue called ManagerToWorkers.\n");
-            if (!client.queueExists("ManagerToWorkers")) {
-                client.createQueue("ManagerToWorkers");
+            System.out.println("Creating a new SQS queue called ManagerToWorker.\n");
+            if (!client.queueExists("ManagerToWorker")) {
+                client.createQueue("ManagerToWorker");
             }
             System.out.println("Creating a new SQS queue called WorkerToManager.\n");
             if (!client.queueExists("WorkerToManager")) {
@@ -109,22 +147,32 @@ public class Manager {
         }
     }
 
-//    public static void UpToS3(String directoryName) {
-//        try {
-//            System.out.println("Uploading a new object to S3 from a file");
-//            int i = 0;
-//            File dir = new File(directoryName);
-//            PutObjectRequest req = new PutObjectRequest();
-//            S3.putObject(req);
-//            i++;
-//        } catch (AmazonServiceException ace) {
-//            System.out.println("Uploading");
-//            System.out.println("Caught an AmazonClientException," +
-//                    " which means the client encountered "
-//                    + "a serious internal problem while trying to communicate with " + "S3, "
-//                    + "such as not being able to access the network.");
-//            System.out.println("Error Message: " + ace.getMessage());
-//        }
-//    }
+    public static void UpToS3(String fileName) {
+        try {
+            Connection connection = null;
+            connection = connectionFactory.createConnection();
+            Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+            File file = new File(fileName);
+            System.out.println("Uploading a new object to S3 from a file");
+            String[] spilted = fileName.split("\\s");
+            PutObjectRequest req = new PutObjectRequest(spilted[0], spilted[1], fileName);
+            S3.putObject(req);
+            Gson gson=new Gson();
+            OutputMsg outputMsg = new OutputMsg((S3.getUrl(spilted[0], spilted[1])).toString(), spilted[1], UUID.fromString(spilted[3]));
+            MessageProducer producer = session.createProducer(session.createQueue("ManagerToApp"+spilted[3]));
+            producer.send(session.createTextMessage(gson.toJson(outputMsg)));
+            files.remove(fileName);
+        } catch (AmazonServiceException ace) {
+            System.out.println("Uploading");
+            System.out.println("Caught an AmazonClientException," +
+                    " which means the client encountered "
+                    + "a serious internal problem while trying to communicate with " + "S3, "
+                    + "such as not being able to access the network.");
+            System.out.println("Error Message: " + ace.getMessage());
+        } catch (JMSException e) {
+            e.printStackTrace();
+        }
+    }
+
 
 }

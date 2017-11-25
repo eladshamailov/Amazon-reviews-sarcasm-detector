@@ -1,3 +1,7 @@
+//import com.amazon.sqs.javamessaging.AmazonSQSMessagingClientWrapper;
+//import com.amazon.sqs.javamessaging.ProviderConfiguration;
+//import com.amazon.sqs.javamessaging.SQSConnection;
+//import com.amazon.sqs.javamessaging.SQSConnectionFactory;
 //import com.amazonaws.auth.AWSCredentialsProvider;
 //import com.amazonaws.auth.AWSStaticCredentialsProvider;
 //import com.amazonaws.auth.profile.ProfileCredentialsProvider;
@@ -12,17 +16,16 @@
 //import com.amazonaws.services.sqs.model.SendMessageRequest;
 //import com.google.gson.Gson;
 //
+//import javax.jms.*;
 //import java.util.*;
 //
 //public class Workers {
 //
 //    public static AmazonS3 S3;
 //    public static AmazonEC2 ec2;
-//    public static AmazonSQS sqs;
+//    public static SQSConnectionFactory connectionFactory;
 //    public static AWSCredentialsProvider credentialsProvider;
 //    public static List<String> URLlist;
-//    public static String MangerToWorker;
-//    public static String WorkerToManager;
 //    public static boolean terminate = false;
 //    public static SentimentAnalysis sentimentAnalysis;
 //    public static NamedEntityRecognition namedEntityRecognition;
@@ -41,10 +44,12 @@
 //        System.out.println("===========================================");
 //        System.out.println("connect to aws & ec2");
 //        System.out.println("===========================================\n");
-//        sqs = AmazonSQSClientBuilder.standard()
-//                .withCredentials(credentialsProvider)
-//                .withRegion("us-west-2")
-//                .build();
+//        SQSConnectionFactory connectionFactory = new SQSConnectionFactory(
+//                new ProviderConfiguration(),
+//                AmazonSQSClientBuilder.standard()
+//                        .withRegion("us-west-2")
+//                        .withCredentials(credentialsProvider)
+//        );
 //        System.out.println("===========================================");
 //        System.out.println("Getting Started with Amazon SQS");
 //        System.out.println("===========================================\n");
@@ -53,17 +58,7 @@
 //    }
 //
 //    public static void getMsg() {
-//        credentialsProvider = new AWSStaticCredentialsProvider
-//                (new ProfileCredentialsProvider().getCredentials());
-//        sqs = AmazonSQSClientBuilder.standard()
-//                .withCredentials(Manager.credentialsProvider)
-//                .withRegion("us-west-2")
-//                .build();
 //
-//        System.out.println("Listing all queues in your account.\n");
-//        for (String queue : sqs.listQueues().getQueueUrls()) {
-//            System.out.println("  QueueUrl: " + queue);
-//        }
 //        MangerToWorker = sqs.listQueues("MangerToWorker").getQueueUrls().get(0);    //changed from get(2)
 //        WorkerToManager = sqs.listQueues("WorkerToManager").getQueueUrls().get(0);  // changed from get(3)
 //        while (!terminate) {
@@ -89,26 +84,28 @@
 //            ArrayList<String> a=namedEntityRecognition.printEntities(review.getText());
 //            ReviewResponse reviewResponse=new ReviewResponse(review,a,reviewGrade,Math.abs(review.getRating()-reviewGrade)>2);
 //            sendMessage(reviewResponse);
-//            //deleteMess(message);
-//    }
-//    public static void sendMessage(ReviewResponse reviewResponse) {
-//        credentialsProvider=new AWSStaticCredentialsProvider(new ProfileCredentialsProvider().getCredentials());
-//        sqs = AmazonSQSClientBuilder.standard()
-//                .withCredentials(credentialsProvider)
-//                .withRegion("us-west-2")
-//                .build();
-//            System.out.println("Sending a message to WorkerToManager\n");
-//            Gson gson=new Gson();
-//            sqs.sendMessage(new SendMessageRequest(WorkerToManager, gson.toJson(reviewResponse).toString()));
+//
 //    }
 //
-//    public static void deleteMess(Message message){
-////        sqs = AmazonSQSClientBuilder.standard()
-////                .withCredentials(Manager.credentialsProvider)
-////                .withRegion("us-west-2")
-////                .build();
-//        System.out.println("Deleting a message.\n");
-//        sqs.deleteMessage(new DeleteMessageRequest(MangerToWorker, message.getReceiptHandle()));
+//    public static void sendMessage(ReviewResponse reviewResponse) {
+//        SQSConnectionFactory connectionFactory = new SQSConnectionFactory(
+//                new ProviderConfiguration(),
+//                AmazonSQSClientBuilder.standard()
+//                        .withRegion("us-west-2")
+//                        .withCredentials(credentialsProvider)
+//        );
+//        Connection connection = null;
+//        try {
+//            Gson gson=new Gson();
+//            connection = connectionFactory.createConnection();
+//            Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+//            MessageProducer producer = session.createProducer(session.createQueue("WorkerToManager"));
+//            TextMessage message = session.createTextMessage(gson.toJson(reviewResponse).toString());
+//            producer.send(message);
+//        } catch (JMSException e) {
+//            e.printStackTrace();
+//        }
+//
 //    }
 //
 //}

@@ -39,8 +39,9 @@ public class UrlMsg extends Msg {
         this.URL = URL;
     }
 
+    @Override
     public String toString(){
-        String s=bucketName+" "+key+" "+URL;
+        String s=bucketName+" "+key+" "+URL+" "+uuid;
         return s;
     }
 
