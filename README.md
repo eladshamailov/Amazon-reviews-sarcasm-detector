@@ -50,7 +50,7 @@ The SQSthread detects it and than the manager downloads the message using the SQ
 
 
 ## Instances and performances
-The instance we are using in the program is "ami-e535c59d" and the type is "micro".
+The instance we are using in the program is "ami-32d8124a" and the type is "micro".
 
 After inserting the input files , it took our program **@TODO insert time** time to finish the work on them.
 
@@ -59,7 +59,7 @@ The n we used is: **@TODO: insert the n we used**
 ## Q&A
 **Question:** Did you think for more than 2 minutes about security?
 
-**Answer:** We took security very serious.We never hard coded the credentials in the program ,we use the EnvironmentVariableCredentialsProvider to get the credentials.
+**Answer:** We took security very seriously.We never hard coded the credentials in the program ,we use the EnvironmentVariableCredentialsProvider to get the credentials.
 The zip file is encoded with a strong password , and decoded from the manager after it gets the zip.
 No one sends the credentials in plain text , not we and no where in the program.
 **@TODO:Add if we used custom ami/chain/enviroment varibales**
