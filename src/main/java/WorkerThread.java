@@ -2,7 +2,6 @@ import com.amazon.sqs.javamessaging.ProviderConfiguration;
 import com.amazon.sqs.javamessaging.SQSConnection;
 import com.amazon.sqs.javamessaging.SQSConnectionFactory;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.EnvironmentVariableCredentialsProvider;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.google.gson.Gson;
@@ -19,8 +18,9 @@ import java.util.ArrayList;
 
 public class WorkerThread implements Runnable {
     public void run() {
-        Manager.credentialsProvider = new AWSStaticCredentialsProvider(new EnvironmentVariableCredentialsProvider().getCredentials());
-
+        System.out.println("in worker thread");
+        Manager.credentialsProvider = new AWSStaticCredentialsProvider
+                (new ProfileCredentialsProvider().getCredentials());
         Manager.connectionFactory = new SQSConnectionFactory(
                 new ProviderConfiguration(),
                 AmazonSQSClientBuilder.standard()
@@ -53,6 +53,7 @@ public class WorkerThread implements Runnable {
 
     private void createOutputMsg(Message message) {
         try {
+
             ReviewResponse r = new Gson().fromJson(((TextMessage) message).getText(), ReviewResponse.class);
             String fileName=r.getReview().getFileName();
             String[] spilted = fileName.split("\\s");
@@ -66,6 +67,7 @@ public class WorkerThread implements Runnable {
                 bw.newLine();
                 bw.flush();
                 bw.close();
+                System.out.println("the counter: "+Manager.files.get(spilted[1]));
                 if (Manager.files.get(spilted[1]) == 0) {
                     Manager.UpToS3(fileName);
                 }

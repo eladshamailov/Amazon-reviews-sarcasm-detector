@@ -44,15 +44,14 @@ public class ReviewResponse {
     public void setSarcasm(boolean sarcasm) {
         this.sarcasm = sarcasm;
     }
+
     @Override
     public String toString() {
-        String s = review.toString() + " ";
-        for (String na : m) {
-            s = na + " ";
-        }
-        s=s+" "+sentiment;
-        s=s+" "+sarcasm;
-        return s;
+        return "ReviewResponse{" +
+                "review=" + review +
+                ", m=" + m +
+                ", sentiment=" + sentiment +
+                ", sarcasm=" + sarcasm +
+                '}';
     }
-
 }

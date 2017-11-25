@@ -65,7 +65,6 @@ public class Manager {
             t2.interrupt();
             executorService.shutdownNow();
             deleteTheQueue();
-            // UpToS3();
     }
 
     private static void deleteTheQueue() {
@@ -162,6 +161,7 @@ public class Manager {
 
     public static void UpToS3(String fileName) {
         try {
+            System.out.println("up the file to s3");
             Connection connection = null;
             connection = connectionFactory.createConnection();
             Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);

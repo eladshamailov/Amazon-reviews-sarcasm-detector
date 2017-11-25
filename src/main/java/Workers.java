@@ -9,7 +9,6 @@ import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.google.gson.Gson;
-
 import javax.jms.*;
 import java.util.*;
 
@@ -91,7 +90,8 @@ public class Workers {
                   int reviewGrade = sentimentAnalysis.findSentiment(reviews.get(i).getText());
                   ArrayList<String> a = namedEntityRecognition.printEntities(reviews.get(i).getText());
                   reviews.get(i).setFileName(fileName);
-                  ReviewResponse reviewResponse = new ReviewResponse(reviews.get(i), a, reviewGrade, Math.abs(reviews.get(i).getRating() - reviewGrade) > 2);
+                  ReviewResponse reviewResponse = new ReviewResponse
+                          (reviews.get(i), a, reviewGrade, Math.abs(reviews.get(i).getRating() - reviewGrade) > 2);
                   sendMessage(reviewResponse);
               }
           }
@@ -121,6 +121,7 @@ public class Workers {
             MessageProducer producer = session.createProducer(session.createQueue("WorkerToManager"));
             TextMessage message = session.createTextMessage(gson.toJson(reviewResponse).toString());
             producer.send(message);
+            System.out.println("send a msg to worker to manager sqs");
         } catch (JMSException e) {
             e.printStackTrace();
         }

@@ -7,8 +7,6 @@ import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.GetQueueAttributesRequest;
 import com.amazonaws.services.sqs.model.GetQueueAttributesResult;
 import com.google.gson.Gson;
-
-
 import javax.jms.*;
 import java.io.*;
 import java.util.ArrayList;
@@ -141,9 +139,12 @@ public class ManagerThread implements Runnable {
                 reviewMsg.setFileName(url.toString());
                 reviewMsg.setAction(2);
                 TextMessage message = session.createTextMessage(gson.toJson(reviewMsg));
-
                 producer.send(message);
-                Manager.files.put(url.getKey(), Manager.files.get(url.getKey()) + 1);
+                int x= reviewMsg.getReviews().size();
+                synchronized (Manager.files) {
+                    System.out.println("the counter when i send msg: "+ (Manager.files.get(url.getKey()) + 1));
+                    Manager.files.put(url.getKey(), Manager.files.get(url.getKey()) +x );
+                }
                 createWorkers();
                 line = reader.readLine();
 //                System.out.println(line +"\n");
