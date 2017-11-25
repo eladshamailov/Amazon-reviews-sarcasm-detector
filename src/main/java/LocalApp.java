@@ -13,6 +13,7 @@ import com.amazonaws.services.gamelift.model.DescribeInstancesRequest;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.Bucket;
+import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
@@ -193,7 +194,7 @@ public class LocalApp {
                     keys.add(file.getName().replace
                             ('\\', '-').replace('/', '-').
                             replace(':', '-'));
-                    PutObjectRequest req = new PutObjectRequest(bucketName, keys.elementAt(i), file);
+                    PutObjectRequest req = new PutObjectRequest(bucketName, keys.elementAt(i), file).withCannedAcl(CannedAccessControlList.PublicRead);
                     S3.putObject(req);
                     i++;
                 }
