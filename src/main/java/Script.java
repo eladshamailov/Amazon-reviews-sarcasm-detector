@@ -4,7 +4,7 @@ public class Script {
 
     String managerScript;
 
-    Script(String publicKey, String privateKey){
+    Script(){
         StringBuilder builder = new StringBuilder();
 //        builder.append("#!/bin/sh\n");
 //        builder.append("BIN_DIR=/tmp\n");
@@ -45,7 +45,7 @@ public class Script {
 //        builder.append("echo 4 > file \n");
 //        builder.append("export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_DEFAULT_REGION\n");
 //        builder.append("echo 5 > file \n");
-        builder.append("wget https://s3-us-west-2.amazonaws.com/akiaisatt3u2kglwoipq-c--users-mor-ideaprojects-assignment1/ManagerDep.zip\n");
+        builder.append("aws s3 cp s3://akiaisatt3u2kglwoipq-c--users-mor-ideaprojects-assignment1/ManagerDep.zip\n");
 //        builder.append("echo 6 > file \n");
         builder.append("unzip ManagerDep.zip\n");
 //        builder.append("echo 7 > file \n");
@@ -56,7 +56,7 @@ public class Script {
         builder.append("aws s3 cp s3://akiaisatt3u2kglwoipq-c--users-mor-ideaprojects-assignment1/Assignment1.jar Assignment1.jar\n");
 //        builder.append("echo accessKey=$AWS_ACCESS_KEY_ID > credentials.file\n");
 //        builder.append("echo secretKey=$AWS_SECRET_ACCESS_KEY >> credentials.file\n");
-        builder.append("sudo java -jar Assignment1.jar\n");
+        builder.append("java -jar Assignment1.jar\n");
 
 
 

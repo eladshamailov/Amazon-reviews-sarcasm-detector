@@ -7,6 +7,7 @@ import com.amazonaws.ClientConfigurationFactory;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.EnvironmentVariableCredentialsProvider;
+import com.amazonaws.auth.InstanceProfileCredentialsProvider;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
@@ -114,7 +115,10 @@ public class Manager {
 
     //creating a connection to the ec2 and the sqs
     public static void initialize() {
-        credentialsProvider = new AWSStaticCredentialsProvider(new EnvironmentVariableCredentialsProvider().getCredentials());
+        credentialsProvider = new AWSStaticCredentialsProvider
+                (new InstanceProfileCredentialsProvider(false).getCredentials());
+//        credentialsProvider = new AWSStaticCredentialsProvider
+//                (new ProfileCredentialsProvider().getCredentials());          //to run local
 
         System.out.println("===========================================");
         System.out.println("connect to aws & ec2");
