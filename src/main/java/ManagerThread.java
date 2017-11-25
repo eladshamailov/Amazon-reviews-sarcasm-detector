@@ -17,8 +17,8 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ManagerThread implements Runnable {
-    private static int numActiveWorker=0;
-    S3Object obj;
+    private static int numActiveWorker = 0;
+    S3Object obj = new S3Object();
     public static AtomicBoolean doWork = new AtomicBoolean(false);
     List<Bucket> bucketList;
 
@@ -32,28 +32,40 @@ public class ManagerThread implements Runnable {
 //                .withRegion("us-west-2")
 //                .build();
         try {
+
             Gson gson = new Gson();
             Message queueMessage = Manager.queue.poll();
-            String text = (((TextMessage) queueMessage).getText());
-            Msg msg = gson.fromJson(text, Msg.class);
-            if (Manager.terminate == true) {
-                if (Manager.uuid == msg.getUuid()) {
-                    handleMassage(msg, text);
-                    queueMessage.acknowledge();
+            if (queueMessage != null) {
+                System.out.println("got message from C Q " + Thread.currentThread().getName());
+                String text = (((TextMessage) queueMessage).getText());
+                System.out.println("message text: " + Thread.currentThread().getName() + " " + text);
+                Msg msg = gson.fromJson(text, Msg.class);
+                if (Manager.terminate == true) {
+                    System.out.println("in terminate true");
+                    System.out.println("Manager UUID: " + Manager.uuid);
+                    System.out.println("msg UUID:" + msg.getUuid());
+                    System.out.println("\n does the uuid's == ? " + (Manager.uuid == msg.getUuid()));
+                    System.out.println("\n does the uuid's equals ? " + (Manager.uuid.equals(msg.getUuid())));
+                    if (Manager.uuid.equals(msg.getUuid())) {
+                        handleMassage(msg, text);
+                    }
                 } else {
-                    queueMessage.acknowledge();
+                    System.out.println("in terminate false");
+                    handleMassage(msg, text);
                 }
-            } else {
-                handleMassage(msg, text);
-                queueMessage.acknowledge();
             }
-        } catch (JMSException e1) {
+        } catch (
+                JMSException e1)
+
+        {
             e1.printStackTrace();
         }
+
     }
 
     private void handleMassage(Msg msg, String text) {
         Gson gson = new Gson();
+        System.out.println(" in handle msg, msg action: " + msg.getAction());
         switch (msg.getAction()) {
             //terminate
             case 0:
@@ -61,10 +73,13 @@ public class ManagerThread implements Runnable {
                 break;
             // URL
             case 1:
+                System.out.println("in case 1 with msg: " + msg.getUuid());
                 UrlMsg urlMsg = gson.fromJson(text, UrlMsg.class);
-                Manager.files.put(urlMsg.getURL(), 0);
+                Manager.files.put(urlMsg.toString(), 0);
+                System.out.println("files size = " + Manager.files.size());
                 parseFromS3(urlMsg);
                 break;
+            //WorkerMsg
             case 4:
                 WorkersNumMsg workerMsg = gson.fromJson(text, WorkersNumMsg.class);
                 if (workerMsg.getNum() > Manager.numWorker.get()) {
@@ -75,8 +90,11 @@ public class ManagerThread implements Runnable {
     }
 
     private void parseFromS3(UrlMsg urlMsg) {
-        File file = new File("localFile");
-        obj = Manager.S3.getObject(urlMsg.getBucketName(), urlMsg.getKey());
+        System.out.println("in parse from s3 with msg: " + urlMsg.uuid + "Thread :" + Thread.currentThread().getName());
+        File file = new File("MNGR"+urlMsg.getKey());
+        String bucketName1 = urlMsg.bucketName;
+        String key1 = urlMsg.key;
+        obj = Manager.S3.getObject(bucketName1, key1);
         InputStream reader = new BufferedInputStream(
                 obj.getObjectContent());
         OutputStream writer = null;
@@ -89,7 +107,7 @@ public class ManagerThread implements Runnable {
             writer.flush();
             writer.close();
             reader.close();
-            parse(file, urlMsg.getURL());
+            parse(file, urlMsg);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -100,7 +118,8 @@ public class ManagerThread implements Runnable {
         Manager.terminate = true;
     }
 
-    public static void parse(File file, String url) {
+    public static void parse(File file, UrlMsg url) {
+        System.out.println("in parse with msg:" + url.uuid);
         Gson gson = new Gson();
         BufferedReader reader = null;
         Manager.connectionFactory = new SQSConnectionFactory(
@@ -116,13 +135,16 @@ public class ManagerThread implements Runnable {
             MessageProducer producer = session.createProducer(session.createQueue("ManagerToWorker"));
             reader = new BufferedReader(new FileReader(file));
             String line = reader.readLine();
+//            System.out.println(line +"\n");
             while (line != null) {
-                Review review = gson.fromJson(line, Review.class);
-                review.setFileName(url);
-                TextMessage message = session.createTextMessage(gson.toJson(review).toString());
+                ReviewMsg reviewMsg = gson.fromJson(line, ReviewMsg.class);
+                reviewMsg.setFileName(url.toString());
+                TextMessage message = session.createTextMessage(gson.toJson(reviewMsg));
                 producer.send(message);
-                Manager.files.put(url, Manager.files.get(url).intValue() + 1);
+                Manager.files.put(url.toString(), Manager.files.get(url.toString()).intValue() + 1);
                 createWorkers();
+                line = reader.readLine();
+//                System.out.println(line +"\n");
             }
         } catch (FileNotFoundException e1) {
             e1.printStackTrace();
@@ -151,8 +173,8 @@ public class ManagerThread implements Runnable {
             attReq.setAttributeNames(attr);
             GetQueueAttributesResult response = client.getAmazonSQSClient().getQueueAttributes(attReq);
             String messagesNum = response.getAttributes().get("ApproximateNumberOfMessages");
-            if (numActiveWorker==0||( Integer.parseInt(messagesNum)-numActiveWorker)>=Manager.numWorker.get()) {
-                int x= (Integer.parseInt(messagesNum)-numActiveWorker)-Manager.numWorker.get();
+            if (numActiveWorker == 0 || (Integer.parseInt(messagesNum) - numActiveWorker) >= Manager.numWorker.get()) {
+                int x = (Integer.parseInt(messagesNum) - numActiveWorker) - Manager.numWorker.get();
                 for (int i = 0; i < x; i++) {
                     //Workers worker=new Workers();
                 }

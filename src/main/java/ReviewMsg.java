@@ -3,6 +3,7 @@ import java.util.ArrayList;
 public class ReviewMsg  extends Msg {
     ArrayList<Review> reviews= new ArrayList<Review>();
     String title;
+    private String fileName;
 
     public ReviewMsg(ArrayList<Review> reviews, String title) {
         super.action=Actions.REVIEW.ordinal();
@@ -25,5 +26,13 @@ public class ReviewMsg  extends Msg {
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public String getFileName() {
+        return fileName;
+    }
+
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
     }
 }

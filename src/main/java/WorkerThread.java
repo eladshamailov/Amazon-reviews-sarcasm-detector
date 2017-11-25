@@ -11,6 +11,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class WorkerThread implements Runnable {
     public void run() {
@@ -46,8 +47,9 @@ public class WorkerThread implements Runnable {
         }
     }
     public void createFiles(){
-        for (int i = 0; i <Manager.files.size() ; i++) {
-            File file= new File(Manager.files.keySet().toArray()[i].toString());
+            ArrayList<String> keys = new ArrayList<>(Manager.files.keySet());
+        for (int i = 0; i <keys.size() ; i++) {
+            File file= new File(keys.get(i));
         }
     }
     private void createOutputMsg(Message message) {
@@ -60,7 +62,7 @@ public class WorkerThread implements Runnable {
             bw.flush();
             bw.close();
             if(Manager.files.get(r.getReview().getFileName())==0){
-              //  Manager.UpToS3();
+                Manager.UpToS3(r.getReview().getFileName());
             }
         } catch (IOException e) {
             e.printStackTrace();

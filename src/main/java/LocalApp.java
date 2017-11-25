@@ -43,7 +43,7 @@ public class LocalApp {
     public static void main(String[] args) throws Exception {
         init(args);
         startS3("C:\\Users\\Mor\\IdeaProjects\\Assignment1");
-        UpToS3("C:/Users/win10/IdeaProjects/docs");
+        UpToS3("C:/Users/Mor/IdeaProjects/docs");
         createQueue();
         if (terminate)
             Terminate();
@@ -257,7 +257,7 @@ public class LocalApp {
                 System.out.println("the key:" + keys.elementAt(i).toString());
                 UrlMsg urlMsg = new UrlMsg(bucketName, keys.elementAt(i), S3.getUrl(bucketName, keys.elementAt(i)).toString(), uuid);
                 Gson gson = new Gson();
-                TextMessage message = session.createTextMessage(gson.toJson(urlMsg).toString());
+                TextMessage message = session.createTextMessage(gson.toJson(urlMsg));
                 producer.send(message);
             }
         } catch (JMSException e) {
@@ -395,7 +395,7 @@ public class LocalApp {
             connection = connectionFactory.createConnection();
             Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
             MessageProducer producer = session.createProducer(session.createQueue("AppToManager"));
-            TextMessage message = session.createTextMessage(gson.toJson(terminateMsg).toString());
+            TextMessage message = session.createTextMessage(gson.toJson(terminateMsg));
             producer.send(message);
         } catch (JMSException e) {
             e.printStackTrace();
