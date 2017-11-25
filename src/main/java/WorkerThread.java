@@ -11,6 +11,9 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 
 public class WorkerThread implements Runnable {
@@ -23,7 +26,7 @@ public class WorkerThread implements Runnable {
                         .withRegion("us-west-2")
                         .withCredentials(Manager.credentialsProvider)
         );
-        createFiles();
+
         try {
             SQSConnection connection = Manager.connectionFactory.createConnection();
             Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
@@ -46,23 +49,25 @@ public class WorkerThread implements Runnable {
             e.printStackTrace();
         }
     }
-    public void createFiles(){
-            ArrayList<String> keys = new ArrayList<>(Manager.files.keySet());
-        for (int i = 0; i <keys.size() ; i++) {
-            File file= new File(keys.get(i));
-        }
-    }
+
     private void createOutputMsg(Message message) {
         try {
             ReviewResponse r = new Gson().fromJson(((TextMessage) message).getText(), ReviewResponse.class);
-            Manager.files.put(r.getReview().getFileName(), Manager.files.get(r.getReview().getFileName()) - 1);
-            BufferedWriter bw = new BufferedWriter(new FileWriter(r.getReview().getFileName(), true));
-            bw.write(r.toString());
-            bw.newLine();
-            bw.flush();
-            bw.close();
-            if(Manager.files.get(r.getReview().getFileName())==0){
-                Manager.UpToS3(r.getReview().getFileName());
+            String fileName=r.getReview().getFileName();
+            String[] spilted = fileName.split("\\s");
+            if((Manager.files.get(spilted[1])) != null){
+                synchronized (Manager.files) {
+                    Manager.files.put((spilted[1]), (Manager.files.get(spilted[1])) - 1);
+                }
+                FileWriter fw = new FileWriter(spilted[1]+"1", true);
+                BufferedWriter bw = new BufferedWriter(fw);
+                bw.write(r.toString());
+                bw.newLine();
+                bw.flush();
+                bw.close();
+                if (Manager.files.get(spilted[1]) == 0) {
+                    Manager.UpToS3(fileName);
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();

@@ -52,14 +52,19 @@ public class Manager {
         t2.start();
         System.out.println("\n run t2 \n");
         work();
-        if(isTerminate) {
+        while(!isTerminate) {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
             //terminateAllWorkers();
             t1.interrupt();
             t2.interrupt();
             executorService.shutdownNow();
             deleteTheQueue();
             // UpToS3();
-        }
     }
 
     private static void deleteTheQueue() {
@@ -159,16 +164,17 @@ public class Manager {
             Connection connection = null;
             connection = connectionFactory.createConnection();
             Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-            File file = new File(fileName);
+
             System.out.println("Uploading a new object to S3 from a file");
             String[] spilted = fileName.split("\\s");
+            File file = new File(spilted[1]+"1");
             PutObjectRequest req = new PutObjectRequest(spilted[0], spilted[1], fileName);
             S3.putObject(req);
             Gson gson=new Gson();
             OutputMsg outputMsg = new OutputMsg((S3.getUrl(spilted[0], spilted[1])).toString(), spilted[1], UUID.fromString(spilted[3]));
             MessageProducer producer = session.createProducer(session.createQueue("ManagerToApp"+spilted[3]));
             producer.send(session.createTextMessage(gson.toJson(outputMsg)));
-            files.remove(fileName);
+            files.remove(spilted[1]);
         } catch (AmazonServiceException ace) {
             System.out.println("Uploading");
             System.out.println("Caught an AmazonClientException," +
