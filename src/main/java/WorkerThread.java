@@ -18,6 +18,7 @@ import java.util.ArrayList;
 
 public class WorkerThread implements Runnable {
     public void run() {
+        System.out.println("in worker thread");
         Manager.credentialsProvider = new AWSStaticCredentialsProvider
                 (new ProfileCredentialsProvider().getCredentials());
         Manager.connectionFactory = new SQSConnectionFactory(
@@ -52,6 +53,7 @@ public class WorkerThread implements Runnable {
 
     private void createOutputMsg(Message message) {
         try {
+
             ReviewResponse r = new Gson().fromJson(((TextMessage) message).getText(), ReviewResponse.class);
             String fileName=r.getReview().getFileName();
             String[] spilted = fileName.split("\\s");
@@ -65,6 +67,7 @@ public class WorkerThread implements Runnable {
                 bw.newLine();
                 bw.flush();
                 bw.close();
+                System.out.println("the counter: "+Manager.files.get(spilted[1]));
                 if (Manager.files.get(spilted[1]) == 0) {
                     Manager.UpToS3(fileName);
                 }

@@ -1,12 +1,12 @@
 public class Review {
-private String id;
-private String link;
-private String title;
-private String text;
-private int rating;
-private String author;
-private String date;
-private String fileName;
+    private String id;
+    private String link;
+    private String title;
+    private String text;
+    private int rating;
+    private String author;
+    private String date;
+    private String fileName;
 
     public Review(String id, String link, String title, String text, int rating, String author, String date) {
         this.id = id;
@@ -84,7 +84,17 @@ private String fileName;
 
     @Override
     public String toString() {
-        String s =id+" "+text+" "+link+" "+text+" "+rating+" "+author+" "+date;
-        return s;
+        return "Review{" +
+                "id='" + id + '\'' +
+                ", link='" + link + '\'' +
+                ", title='" + title + '\'' +
+                ", text='" + text + '\'' +
+                ", rating=" + rating +
+                ", author='" + author + '\'' +
+                ", date='" + date + '\'' +
+                '}';
     }
 }
+
+
+
