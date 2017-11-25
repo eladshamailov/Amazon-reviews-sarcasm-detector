@@ -264,21 +264,44 @@ public class LocalApp {
             e.printStackTrace();
         }
     }
-//    private String getUserData(String jarName) throws IOException {
-//        String script = "#!/bin/bash\n"
-//                + "BIN_DIR=/tmp\n"
-//                + "cd $BIN_DIR\n"
-//                + "wget https://s3.amazonaws.com/akiai3bmpkxyzm2gf4gamybucket/rootkey.zip\n"
-//                + "unzip -P awsswa rootkey.zip\n"
-//                + "wget https://s3.amazonaws.com/akiai3bmpkxyzm2gf4gamybucket/dsp1_v1_lib.zip\n"
-//                + "unzip dsp1_v1_lib.zip\n"
-//                + "wget http://repo1.maven.org/maven2/edu/stanford/nlp/stanford-corenlp/3.3.0/stanford-corenlp-3.3.0-models.jar\n"
-//                + "mv stanford-corenlp-3.3.0-models.jar dsp1_v1_lib\n"
-//                + "wget https://s3.amazonaws.com/akiai3bmpkxyzm2gf4gamybucket/" + jarName + "\n"
-//                + "java -jar -Xms768m -Xmx1024m $BIN_DIR/" + jarName;
-//        String str = new String(Base64.encode(script.getBytes()));
-//        return str;
-//    }
+    public static String getUserData() throws IOException {
+        String script = "#!/bin/bash\n"
+                + "BIN_DIR=/tmp\n"
+                + "cd $BIN_DIR\n"
+                + "wget https://s3-us-west-2.amazonaws.com/akiaisatt3u2kglwoipq-c--users-mor-ideaprojects-assignment1/ManagerDep.zip\n"
+                + "unzip ManagerDep.zip\n"
+                + "wget https://s3.amazonaws.com/akiai3bmpkxyzm2gf4gamybucket/" + "Assignment1.jar" + "\n"
+                + "java -jar -Xms768m -Xmx1024m $BIN_DIR/" + "Assignment1.jar";
+        String str = new String(Base64.encode(script.getBytes()));
+        return str;
+
+//        builder.append("#!/bin/sh\n");
+//        builder.append("BIN_DIR=/tmp\n");
+//        builder.append("mkdir -p $BIN_DIR/dependencies\n");
+//        builder.append("cd $BIN_DIR/dependencies\n");
+//        builder.append(" echo 1 > file \n");
+//        builder.append("AWS_ACCESS_KEY_ID=" + publicKey+"\n");
+//        builder.append("echo 2 > file \n");
+//        builder.append("AWS_SECRET_ACCESS_KEY=" + privateKey+"\n");
+//        builder.append("echo 3 > file \n");
+//        builder.append("AWS_DEFAULT_REGION=us-west-2\n");
+//        builder.append("echo 4 > file \n");
+//        builder.append("export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_DEFAULT_REGION\n");
+//        builder.append("echo 5 > file \n");
+//        builder.append("wget https://s3-us-west-2.amazonaws.com/akiaisatt3u2kglwoipq-c--users-mor-ideaprojects-assignment1/ManagerDep.zip\n");
+//        builder.append("echo 6 > file \n");
+//        builder.append("unzip ManagerDep.zip\n");
+//        builder.append("echo 7 > file \n");
+//        builder.append("mkdir -p $BIN_DIR/running\n");
+//        builder.append("cd $BIN_DIR/running\n");
+//        builder.append("mkdir -p $BIN_DIR/running/lib\n");
+//        builder.append("cp ../dependencies/*.jar lib/\n");
+//        builder.append("aws s3 cp s3://akiaisatt3u2kglwoipq-c--users-mor-ideaprojects-assignment1/Assignment1.jar Assignment1.jar\n");
+//        builder.append("echo accessKey=$AWS_ACCESS_KEY_ID > credentials.file\n");
+//        builder.append("echo secretKey=$AWS_SECRET_ACCESS_KEY >> credentials.file\n");
+//        builder.append("sudo java -jar Assignment1.jar\n");
+
+    }
 
     //get an output from the queue
     public static void getOutput() {
