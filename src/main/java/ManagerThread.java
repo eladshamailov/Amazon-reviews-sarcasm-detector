@@ -75,7 +75,7 @@ public class ManagerThread implements Runnable {
             case 1:
                 System.out.println("in case 1 with msg: " + msg.getUuid());
                 UrlMsg urlMsg = gson.fromJson(text, UrlMsg.class);
-                Manager.files.put(urlMsg.toString(), 0);
+                Manager.files.put(urlMsg.getKey(), 0);
                 System.out.println("files size = " + Manager.files.size());
                 parseFromS3(urlMsg);
                 break;
@@ -141,8 +141,9 @@ public class ManagerThread implements Runnable {
                 reviewMsg.setFileName(url.toString());
                 reviewMsg.setAction(2);
                 TextMessage message = session.createTextMessage(gson.toJson(reviewMsg));
+
                 producer.send(message);
-                Manager.files.put(url.toString(), Manager.files.get(url.toString()).intValue() + 1);
+                Manager.files.put(url.getKey(), Manager.files.get(url.getKey()) + 1);
                 createWorkers();
                 line = reader.readLine();
 //                System.out.println(line +"\n");
