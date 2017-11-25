@@ -139,6 +139,7 @@ public class ManagerThread implements Runnable {
             while (line != null) {
                 ReviewMsg reviewMsg = gson.fromJson(line, ReviewMsg.class);
                 reviewMsg.setFileName(url.toString());
+                reviewMsg.setAction(2);
                 TextMessage message = session.createTextMessage(gson.toJson(reviewMsg));
                 producer.send(message);
                 Manager.files.put(url.toString(), Manager.files.get(url.toString()).intValue() + 1);

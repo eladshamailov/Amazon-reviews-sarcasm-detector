@@ -52,17 +52,14 @@ public class Manager {
         t2.start();
         System.out.println("\n run t2 \n");
         work();
-        t1.interrupt();
-        t2.interrupt();
-        executorService.shutdownNow();
-       // deleteTheQueue();
-        //       UpToS3();
-//        while(true) {
-//            executor.execute(sqsthread);
-//            while (!SQSthread.doWork.get()) {
-//                Thread.currentThread().sleep(2000);
-//            }
-
+        if(isTerminate) {
+            //terminateAllWorkers();
+            t1.interrupt();
+            t2.interrupt();
+            executorService.shutdownNow();
+            deleteTheQueue();
+            // UpToS3();
+        }
     }
 
     private static void deleteTheQueue() {
@@ -96,9 +93,19 @@ public class Manager {
                 Runnable manager = new ManagerThread();
                 executorService.execute(manager);
             }
+            if(k==0){
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
         }
+        isTerminate=true;
 
     }
+
+
 
     //creating a connection to the ec2 and the sqs
     public static void initialize() {

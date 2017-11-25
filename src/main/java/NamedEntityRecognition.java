@@ -46,7 +46,7 @@ public class NamedEntityRecognition {
                 String ne = token.get(NamedEntityTagAnnotation.class);
                 if(ne.equals("PERSON")||ne.equals("LOCATION")||ne.equals("ORGANIZATION"))
                      arrayList.add("\t-" + word + ":" + ne);
-                System.out.println("\t-" + word + ":" + ne);
+           //     System.out.println("\t-" + word + ":" + ne);
             }
         }
         return arrayList;
