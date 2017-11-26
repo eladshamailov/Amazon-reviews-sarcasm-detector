@@ -59,11 +59,9 @@ The n we used is: **@TODO: insert the n we used**
 ## Q&A
 **Question:** Did you think for more than 2 minutes about security?
 
-**Answer:** We took security very seriously.We never hard coded the credentials in the program ,we use the EnvironmentVariableCredentialsProvider to get the credentials in the localApp.
-To run remotely the instances , we use InstanceProfileCredentialsProvider and IAM roles , specific role for the manager and specific role for the workers. In this way , we never expose our credentials , because we never send them in plain text or in any file.
+**Answer:** We took security very seriously.We never hard coded the credentials in the program ,we are using the EnvironmentVariableCredentialsProvider to get the credentials in the localApp.
+To run the instances remotely , we use InstanceProfileCredentialsProvider and IAM roles , specific role for the manager and specific role for the workers. In this way , we never expose our credentials , because we never send them in plain text or in any file.
 The zip file is encoded with a strong password , and decoded from the manager after it gets the zip.
-
-**@TODO:Add if we used custom ami/chain/enviroment varibales**
 
 **Question:** Did you think about scalability? Will your program work properly when 1 million clients connected at the same time? How about 2 million? 1 billion? Scalability is very important aspect of the system, is it scalable?
 
