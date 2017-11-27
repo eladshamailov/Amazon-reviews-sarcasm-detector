@@ -14,6 +14,8 @@ import javax.jms.*;
 
 public class SQSthread implements Runnable {
     public static AtomicInteger count = new AtomicInteger(0);
+    public static Session session;
+    public static SQSConnection connection;
 
     @Override
     public void run() {
@@ -31,8 +33,8 @@ public class SQSthread implements Runnable {
         );
         try {
 
-            SQSConnection connection = Manager.connectionFactory.createConnection();
-            Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+            connection = Manager.connectionFactory.createConnection();
+            session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
             MessageConsumer consumer = session.createConsumer(session.createQueue("AppToManager"));
             connection.start();
             Message message;
@@ -50,7 +52,16 @@ public class SQSthread implements Runnable {
         } catch (JMSException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            System.out.println("The sqs thread is finish");
+            return;
+        }finally {
+            try {
+                session.close();
+                connection.close();
+            } catch (JMSException e) {
+                e.printStackTrace();
+            }
+
         }
     }
 }

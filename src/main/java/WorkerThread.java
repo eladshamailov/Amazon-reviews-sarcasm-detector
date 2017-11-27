@@ -18,6 +18,9 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 
 public class WorkerThread implements Runnable {
+    public SQSConnection connection;
+    public Session session;
+
     public void run() {
         System.out.println("in worker thread");
         Manager.credentialsProvider = new AWSStaticCredentialsProvider
@@ -34,8 +37,8 @@ public class WorkerThread implements Runnable {
         );
 
         try {
-            SQSConnection connection = Manager.connectionFactory.createConnection();
-            Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+            connection = Manager.connectionFactory.createConnection();
+            session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
             MessageConsumer consumer = session.createConsumer(session.createQueue("WorkerToManager"));
             connection.start();
             Message message;
@@ -52,13 +55,21 @@ public class WorkerThread implements Runnable {
         } catch (JMSException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            System.out.println("The worker thread is finish");
+            return;
+        }finally {
+            try {
+                session.close();
+                connection.close();
+            } catch (JMSException e) {
+                e.printStackTrace();
+            }
         }
     }
 
     private void createOutputMsg(Message message) {
         try {
-
+            Gson gson = new Gson();
             ReviewResponse r = new Gson().fromJson(((TextMessage) message).getText(), ReviewResponse.class);
             String fileName=r.getReview().getFileName();
             String[] spilted = fileName.split("\\s");
@@ -68,14 +79,15 @@ public class WorkerThread implements Runnable {
                 }
                 FileWriter fw = new FileWriter(spilted[1]+"1", true);
                 BufferedWriter bw = new BufferedWriter(fw);
-                bw.write(r.toString());
+                bw.write(gson.toJson(r));
                 bw.newLine();
                 bw.flush();
                 bw.close();
-                System.out.println("the counter: "+Manager.files.get(spilted[1]));
                 if (Manager.files.get(spilted[1]) == 0) {
                     Manager.UpToS3(fileName);
+                 //   OutputMsg outputMsg=new OutputMsg(spilted[1]+"1");
                 }
+
             }
         } catch (IOException e) {
             e.printStackTrace();

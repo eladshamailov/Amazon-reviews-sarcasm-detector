@@ -22,12 +22,21 @@ public class Workers {
     public static boolean terminate = false;
     public static SentimentAnalysis sentimentAnalysis;
     public static NamedEntityRecognition namedEntityRecognition;
+    public static SQSConnection connection;
+    public static Session session;
 
     public static void main(String [] args){
         initialize();
         while(!terminate) {
             getMsg();
         }
+        try {
+            session.close();
+            connection.close();
+        } catch (JMSException e) {
+            e.printStackTrace();
+        }
+
     }
     public static void initialize() {
         credentialsProvider = new AWSStaticCredentialsProvider
@@ -62,15 +71,15 @@ public class Workers {
                         .withCredentials(Manager.credentialsProvider)
         );
         try {
-
-            SQSConnection connection = connectionFactory.createConnection();
-            Session session = connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
+           connection = connectionFactory.createConnection();
+            session = connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
             MessageConsumer consumer = session.createConsumer(session.createQueue("ManagerToWorker"));
             connection.start();
             Message message;
             message = consumer.receive();
             workOnMsg(message);
            // deleteMess(message);
+
             } catch (JMSException e) {
             e.printStackTrace();
         }
@@ -113,15 +122,15 @@ public class Workers {
                         .withRegion("us-west-2")
                         .withCredentials(credentialsProvider)
         );
-        Connection connection = null;
         try {
             Gson gson=new Gson();
             connection = connectionFactory.createConnection();
-            Session session = connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
+            session = connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
             MessageProducer producer = session.createProducer(session.createQueue("WorkerToManager"));
             TextMessage message = session.createTextMessage(gson.toJson(reviewResponse).toString());
             producer.send(message);
             System.out.println("send a msg to worker to manager sqs");
+
         } catch (JMSException e) {
             e.printStackTrace();
         }

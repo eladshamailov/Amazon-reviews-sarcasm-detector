@@ -13,6 +13,7 @@ import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.google.gson.Gson;
@@ -32,12 +33,12 @@ public class Manager {
     public static SQSConnectionFactory connectionFactory;
     public static boolean terminate = false;
     public static AWSCredentialsProvider credentialsProvider;
-    static ExecutorService executorService;
+    public static ExecutorService executorService;
     public static boolean isTerminate = false;
     public static UUID uuid;
     public static AtomicInteger numWorker = new AtomicInteger(0);
     public static ConcurrentLinkedQueue<Message> queue = new ConcurrentLinkedQueue<>();
-
+    public static int numActiveWorker = 0;
 
     public static void main(String[] args) throws InterruptedException {
         initialize();
@@ -61,11 +62,37 @@ public class Manager {
                 e.printStackTrace();
             }
         }
-            //terminateAllWorkers();
+            terminateAllWorkers();
             t1.interrupt();
             t2.interrupt();
             executorService.shutdownNow();
-            deleteTheQueue();
+        //    deleteTheQueue();
+    }
+
+    private static void terminateAllWorkers() {
+        SQSConnectionFactory connectionFactory = new SQSConnectionFactory(
+                new ProviderConfiguration(),
+                AmazonSQSClientBuilder.standard()
+                        .withRegion("us-west-2")
+                        .withCredentials(credentialsProvider)
+        );
+        Connection connection = null;
+        try {
+            Gson gson = new Gson();
+            connection = connectionFactory.createConnection();
+            Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+            MessageProducer producer = session.createProducer(session.createQueue("ManagerToWorker"));
+            TerminateMsg terminateMsg = new TerminateMsg(uuid);
+            for (int i = 0; i < numActiveWorker; i++) {
+                TextMessage message = session.createTextMessage(gson.toJson(terminateMsg).toString());
+                producer.send(message);
+            }
+            session.close();
+            connection.close();
+
+        } catch (JMSException e) {
+            e.printStackTrace();
+        }
     }
 
     private static void deleteTheQueue() {
@@ -169,17 +196,17 @@ public class Manager {
             Connection connection = null;
             connection = connectionFactory.createConnection();
             Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-
-            System.out.println("Uploading a new object to S3 from a file");
             String[] spilted = fileName.split("\\s");
             File file = new File(spilted[1]+"1");
-            PutObjectRequest req = new PutObjectRequest(spilted[0], spilted[1], fileName);
+            PutObjectRequest req = new PutObjectRequest(spilted[0], spilted[1]+"1", file).withCannedAcl(CannedAccessControlList.PublicRead);
             S3.putObject(req);
             Gson gson=new Gson();
-            OutputMsg outputMsg = new OutputMsg((S3.getUrl(spilted[0], spilted[1])).toString(), spilted[1], UUID.fromString(spilted[3]));
+            OutputMsg outputMsg = new OutputMsg((S3.getUrl(spilted[0], spilted[1]+"1")).toString(), spilted[1]+"1", UUID.fromString(spilted[3]));
             MessageProducer producer = session.createProducer(session.createQueue("ManagerToApp"+spilted[3]));
             producer.send(session.createTextMessage(gson.toJson(outputMsg)));
             files.remove(spilted[1]);
+            session.close();
+            connection.close();
         } catch (AmazonServiceException ace) {
             System.out.println("Uploading");
             System.out.println("Caught an AmazonClientException," +
@@ -191,6 +218,4 @@ public class Manager {
             e.printStackTrace();
         }
     }
-
-
 }
