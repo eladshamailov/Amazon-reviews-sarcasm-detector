@@ -301,43 +301,40 @@ public class LocalApp {
     }
 
     public static void createHTML(OutputMsg outputMsg) throws IOException {
-        File file = getFromS3(outputMsg.getUrl());
+        File file = getFromS3(outputMsg.getFileName());
         FileReader fileReader = new FileReader(file);
         BufferedReader bufferedReader = new BufferedReader(fileReader);
         StringBuffer stringBuffer = new StringBuffer();
         String line;
-        BufferedWriter bw = new BufferedWriter(new FileWriter(arguments.get(outputMsg.getFileName())));
+        String outputName = outputMsg.getFileName();
+        BufferedWriter bw = new BufferedWriter(new FileWriter(arguments.get(outputName.substring(0,outputName.length()-1))));
         bw.write("<html>");
         bw.write("<body>");
         Gson gson = new Gson();
         while ((line = bufferedReader.readLine()) != null) {
-            String html;
             StringBuilder builder = new StringBuilder();
             ReviewResponse reviewResponse = gson.fromJson(line, ReviewResponse.class);
-            builder.append(reviewResponse.toString());
-            if (reviewResponse.isSarcasm() == true) {
-                builder.append("This txt is sarcastic");
-            } else {
-                builder.append("This txt is not sarcastic");
-            }
-            html = builder.toString();
+            String html=(gson.toJson(reviewResponse));
+            String color = "";
             switch (reviewResponse.getSentiment()) {
                 case 0:
-                    bw.write("<h2 style=background-color:DarkRed>" + html + "</h2>");
+                    color = "DarkRed";
                     break;
                 case 1:
-                    bw.write("<h2 style=background-color:red>" + html + "</h2>");
+                    color = "red";
                     break;
                 case 2:
-                    bw.write("<h2 style=background-color:black>" + html + "</h2>");
+                    color = "black";
                     break;
                 case 3:
-                    bw.write("<h2 style=background-color:LightGreen>" + html + "</h2>");
+                    color = "LightGreen";
                     break;
                 case 4:
-                    bw.write("<h2 style=background-color:DarkGreen>" + html + "</h2>");
+                    color = "DarkGreen";
                     break;
             }
+
+            bw.write("<p style=color:"+color+">" + html + "</p>");
         }
         bw.write("</body>");
         bw.write("</html>");
@@ -345,9 +342,10 @@ public class LocalApp {
         numberOfFiles--;
     }
 
-    private static File getFromS3(String url) {
-        File file = new File("localFile.txt");
-        S3Object obj = S3.getObject(bucketName, url);
+
+    private static File getFromS3(String s) {
+        File file = new File(s);
+        S3Object obj = S3.getObject(bucketName, s);
         InputStream reader = new BufferedInputStream(
                 obj.getObjectContent());
         OutputStream writer = null;
@@ -358,6 +356,9 @@ public class LocalApp {
             while ((read = reader.read()) != -1) {
                 writer.write(read);
             }
+            writer.flush();
+            writer.close();
+            reader.close();
         } catch (IOException e) {
             e.printStackTrace();
         }

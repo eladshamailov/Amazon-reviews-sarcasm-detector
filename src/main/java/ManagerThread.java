@@ -15,7 +15,7 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ManagerThread implements Runnable {
-    private static int numActiveWorker = 0;
+
     S3Object obj = new S3Object();
     public static AtomicBoolean doWork = new AtomicBoolean(false);
     List<Bucket> bucketList;
@@ -149,6 +149,8 @@ public class ManagerThread implements Runnable {
                 line = reader.readLine();
 //                System.out.println(line +"\n");
             }
+            session.close();
+            connection.close();
         } catch (FileNotFoundException e1) {
             e1.printStackTrace();
         } catch (IOException e1) {
@@ -176,8 +178,8 @@ public class ManagerThread implements Runnable {
             attReq.setAttributeNames(attr);
             GetQueueAttributesResult response = client.getAmazonSQSClient().getQueueAttributes(attReq);
             String messagesNum = response.getAttributes().get("ApproximateNumberOfMessages");
-            if (numActiveWorker == 0 || (Integer.parseInt(messagesNum) - numActiveWorker) >= Manager.numWorker.get()) {
-                int x = (Integer.parseInt(messagesNum) - numActiveWorker) - Manager.numWorker.get();
+            if (Manager.numActiveWorker == 0 || (Integer.parseInt(messagesNum) - Manager.numActiveWorker) >= Manager.numWorker.get()) {
+                int x = (Integer.parseInt(messagesNum) - Manager.numActiveWorker) - Manager.numWorker.get();
                 for (int i = 0; i < x; i++) {
                     //Workers worker=new Workers();
                 }
