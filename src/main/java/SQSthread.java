@@ -3,6 +3,8 @@ import com.amazon.sqs.javamessaging.ProviderConfiguration;
 import com.amazon.sqs.javamessaging.SQSConnection;
 import com.amazon.sqs.javamessaging.SQSConnectionFactory;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.EnvironmentVariableCredentialsProvider;
+import com.amazonaws.auth.InstanceProfileCredentialsProvider;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import java.util.concurrent.atomic.AtomicInteger;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
@@ -19,7 +21,10 @@ public class SQSthread implements Runnable {
     public void run() {
         System.out.println("\n is run sqs t \n");
         Manager.credentialsProvider = new AWSStaticCredentialsProvider
-                (new ProfileCredentialsProvider().getCredentials());
+                (new InstanceProfileCredentialsProvider(false).getCredentials());
+//        Manager.credentialsProvider = new AWSStaticCredentialsProvider
+//                (new ProfileCredentialsProvider().getCredentials());      //to run local
+
         Manager.connectionFactory = new SQSConnectionFactory(
                 new ProviderConfiguration(),
                 AmazonSQSClientBuilder.standard()

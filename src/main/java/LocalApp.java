@@ -44,7 +44,7 @@ public class LocalApp {
     public static void main(String[] args) throws Exception {
         init(args);
         startS3("C:\\Users\\Mor\\IdeaProjects\\Assignment1");
-        UpToS3("C:/Users/Mor/IdeaProjects/docs");
+        UpToS3("C:/Users/win10/IdeaProjects/docs");
         createQueue();
         if (terminate)
             Terminate();
@@ -64,18 +64,18 @@ public class LocalApp {
                 .withCredentials(credentialsProvider)
                 .withRegion("us-west-2")
                 .build();
-        Script s = new Script(credentialsProvider.getCredentials().getAWSAccessKeyId(), credentialsProvider.getCredentials().getAWSSecretKey());
-        System.out.println("the script for the Manager: " + s);
-//        instanceP=new IamInstanceProfileSpecification();
-//        instanceP.setArn("arn:aws:iam::504703692217:instance-profile/DspAssignment1Role");
+        Script managerBash = new Script();
+        System.out.println("the script for the Manager: " + managerBash);
+        instanceP=new IamInstanceProfileSpecification();
+        instanceP.setArn("arn:aws:iam::504703692217:instance-profile/ManagerRole");
         if (!isActive()) {
             try {
                 request = new RunInstancesRequest("ami-32d8124a", 1, 1);
                 request.setInstanceType(InstanceType.T2Micro.toString());
-                request.withKeyName("morKP");
+                request.withKeyName("eladKP");
                 request.withSecurityGroups("mor");
-                request.withUserData(s.getManagerScript());
-//                request.setIamInstanceProfile(instanceP);
+                request.withUserData(managerBash.getManagerScript());
+                request.setIamInstanceProfile(instanceP);
                 instances = ec2.runInstances(request).getReservation().getInstances();
                 System.out.println("create instances: " + instances);
 
