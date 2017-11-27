@@ -2,6 +2,12 @@ import com.amazon.sqs.javamessaging.AmazonSQSMessagingClientWrapper;
 import com.amazon.sqs.javamessaging.ProviderConfiguration;
 import com.amazon.sqs.javamessaging.SQSConnection;
 import com.amazon.sqs.javamessaging.SQSConnectionFactory;
+import com.amazonaws.AmazonServiceException;
+import com.amazonaws.services.ec2.AmazonEC2;
+import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
+import com.amazonaws.services.ec2.model.IamInstanceProfileSpecification;
+import com.amazonaws.services.ec2.model.InstanceType;
+import com.amazonaws.services.ec2.model.RunInstancesRequest;
 import com.amazonaws.services.s3.model.*;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.GetQueueAttributesRequest;
@@ -13,6 +19,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static com.oracle.jrockit.jfr.FlightRecorder.isActive;
 
 public class ManagerThread implements Runnable {
 
@@ -178,13 +186,36 @@ public class ManagerThread implements Runnable {
             attReq.setAttributeNames(attr);
             GetQueueAttributesResult response = client.getAmazonSQSClient().getQueueAttributes(attReq);
             String messagesNum = response.getAttributes().get("ApproximateNumberOfMessages");
+            System.out.println("the num that has in the queue:"+messagesNum);
             if (Manager.numActiveWorker == 0 || (Integer.parseInt(messagesNum) - Manager.numActiveWorker) >= Manager.numWorker.get()) {
                 int x = (Integer.parseInt(messagesNum) - Manager.numActiveWorker) - Manager.numWorker.get();
+                System.out.println("the num of workers that we need to create:"+x);
                 for (int i = 0; i < x; i++) {
-                    //Workers worker=new Workers();
-                }
-            }
+                    System.out.println("we create it");
+                    AmazonEC2 ec2 = AmazonEC2ClientBuilder.standard()
+                            .withCredentials(Manager.credentialsProvider)
+                            .withRegion("us-west-2")
+                            .build();
+                    Script workersBash = new Script();
+                    workersBash.setWorkersScript();
+                    System.out.println("the script for the worker: " + workersBash);
+                        try {
+                            RunInstancesRequest  request = new RunInstancesRequest("ami-32d8124a", 1, 1);
+                            request.setInstanceType(InstanceType.T2Micro.toString());
+                            request.withKeyName("eladKP");
+                            request.withSecurityGroups("mor");
+                            request.withUserData(workersBash.getManagerScript());
+                            request.setIamInstanceProfile(Manager.instanceP);
+                            ec2.runInstances(request);
 
+                        } catch (AmazonServiceException ase) {
+                            System.out.println("Caught Exception: " + ase.getMessage());
+                            System.out.println("Reponse Status Code: " + ase.getStatusCode());
+                            System.out.println("Error Code: " + ase.getErrorCode());
+                            System.out.println("Request ID: " + ase.getRequestId());
+                        }
+                    }
+                }
         } catch (JMSException e) {
             e.printStackTrace();
         }

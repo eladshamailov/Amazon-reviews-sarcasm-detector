@@ -44,7 +44,7 @@ public class LocalApp {
     public static void main(String[] args) throws Exception {
         init(args);
         startS3("C:\\Users\\Mor\\IdeaProjects\\Assignment1");
-        UpToS3("C:/Users/win10/IdeaProjects/docs");
+        UpToS3("C:/Users/Mor/IdeaProjects/docs");
         createQueue();
         if (terminate)
             Terminate();
@@ -59,7 +59,8 @@ public class LocalApp {
     public static void init(String[] args) {
         createMap(args);
         uuid = UUID.randomUUID();
-        credentialsProvider = new AWSStaticCredentialsProvider(new EnvironmentVariableCredentialsProvider().getCredentials());
+        credentialsProvider = new AWSStaticCredentialsProvider(
+                new EnvironmentVariableCredentialsProvider().getCredentials());
         ec2 = AmazonEC2ClientBuilder.standard()
                 .withCredentials(credentialsProvider)
                 .withRegion("us-west-2")
@@ -327,7 +328,6 @@ public class LocalApp {
         bw.close();
         numberOfFiles--;
     }
-
 
     private static File getFromS3(String s) {
         File file = new File(s);

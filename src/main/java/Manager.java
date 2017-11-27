@@ -11,6 +11,7 @@ import com.amazonaws.auth.InstanceProfileCredentialsProvider;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
+import com.amazonaws.services.ec2.model.IamInstanceProfileSpecification;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
@@ -36,6 +37,7 @@ public class Manager {
     public static ExecutorService executorService;
     public static boolean isTerminate = false;
     public static UUID uuid;
+    public  static IamInstanceProfileSpecification instanceP;
     public static AtomicInteger numWorker = new AtomicInteger(0);
     public static ConcurrentLinkedQueue<Message> queue = new ConcurrentLinkedQueue<>();
     public static int numActiveWorker = 0;
@@ -169,6 +171,8 @@ public class Manager {
                 .withCredentials(credentialsProvider)
                 .withRegion("us-west-2")
                 .build();
+        instanceP=new IamInstanceProfileSpecification();
+        instanceP.setArn("arn:aws:iam::504703692217:instance-profile/WorkersRole");
     }
 
     //creating the Queues of the Worker-manager

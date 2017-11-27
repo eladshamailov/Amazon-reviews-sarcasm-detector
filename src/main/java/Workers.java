@@ -3,6 +3,7 @@ import com.amazon.sqs.javamessaging.SQSConnection;
 import com.amazon.sqs.javamessaging.SQSConnectionFactory;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.InstanceProfileCredentialsProvider;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
@@ -40,7 +41,7 @@ public class Workers {
     }
     public static void initialize() {
         credentialsProvider = new AWSStaticCredentialsProvider
-                (new ProfileCredentialsProvider().getCredentials());
+                (new InstanceProfileCredentialsProvider(false).getCredentials());
         ec2 = AmazonEC2ClientBuilder.standard()
                 .withCredentials(credentialsProvider)
                 .withRegion("us-west-2")
@@ -63,7 +64,7 @@ public class Workers {
 
     public static void getMsg() {
         credentialsProvider = new AWSStaticCredentialsProvider
-                (new ProfileCredentialsProvider().getCredentials());
+                (new InstanceProfileCredentialsProvider(false).getCredentials());
         connectionFactory = new SQSConnectionFactory(
                 new ProviderConfiguration(),
                 AmazonSQSClientBuilder.standard()
