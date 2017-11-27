@@ -266,21 +266,6 @@ public class LocalApp {
             e.printStackTrace();
         }
     }
-//    private String getUserData(String jarName) throws IOException {
-//        String script = "#!/bin/bash\n"
-//                + "BIN_DIR=/tmp\n"
-//                + "cd $BIN_DIR\n"
-//                + "wget https://s3.amazonaws.com/akiai3bmpkxyzm2gf4gamybucket/rootkey.zip\n"
-//                + "unzip -P awsswa rootkey.zip\n"
-//                + "wget https://s3.amazonaws.com/akiai3bmpkxyzm2gf4gamybucket/dsp1_v1_lib.zip\n"
-//                + "unzip dsp1_v1_lib.zip\n"
-//                + "wget http://repo1.maven.org/maven2/edu/stanford/nlp/stanford-corenlp/3.3.0/stanford-corenlp-3.3.0-models.jar\n"
-//                + "mv stanford-corenlp-3.3.0-models.jar dsp1_v1_lib\n"
-//                + "wget https://s3.amazonaws.com/akiai3bmpkxyzm2gf4gamybucket/" + jarName + "\n"
-//                + "java -jar -Xms768m -Xmx1024m $BIN_DIR/" + jarName;
-//        String str = new String(Base64.encode(script.getBytes()));
-//        return str;
-//    }
 
     //get an output from the queue
     public static void getOutput() {
