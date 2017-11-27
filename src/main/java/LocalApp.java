@@ -44,7 +44,7 @@ public class LocalApp {
     public static void main(String[] args) throws Exception {
         init(args);
         startS3("C:\\Users\\Mor\\IdeaProjects\\Assignment1");
-        UpToS3("C:/Users/Mor/IdeaProjects/docs");
+        UpToS3("C:/Users/win10/IdeaProjects/docs");
         createQueue();
         if (terminate)
             Terminate();
