@@ -211,7 +211,7 @@ public class ManagerThread implements Runnable {
                     workersBash.setWorkersScript();
                     System.out.println("the script for the worker: " + workersBash);
                         try {
-                            RunInstancesRequest  request = new RunInstancesRequest("ami-32d8124a", 1, 1);
+                            RunInstancesRequest  request = new RunInstancesRequest("ami-bf4193c7", 1, 1);
                             request.setInstanceType(InstanceType.T2Micro.toString());
                             request.withKeyName("eladKP");
                             request.withSecurityGroups("mor");
