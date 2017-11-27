@@ -28,7 +28,7 @@ public class Script {
         workersBuild.append("aws s3 cp s3://akiaisatt3u2kglwoipq-c--users-mor-ideaprojects-assignment1/WorkersDep.zip WorkersDep.zip\n");
         workersBuild.append("unzip ManagerDep.zip\n");
         workersBuild.append("aws s3 cp s3://akiaisatt3u2kglwoipq-c--users-mor-ideaprojects-assignment1/workers.jar workers.jar\n");
-        workersBuild.append("java -jar manager.jar\n");
+        workersBuild.append("java -jar workers.jar\n");
         this.workersScript = new String(Base64.encodeBase64(workersBuild.toString().getBytes()));
     }
 
