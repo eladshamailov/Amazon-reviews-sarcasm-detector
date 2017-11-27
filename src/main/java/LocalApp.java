@@ -65,6 +65,7 @@ public class LocalApp {
                 .withRegion("us-west-2")
                 .build();
         Script managerBash = new Script();
+        managerBash.setManagerScript();
         System.out.println("the script for the Manager: " + managerBash);
         instanceP=new IamInstanceProfileSpecification();
         instanceP.setArn("arn:aws:iam::504703692217:instance-profile/ManagerRole");
