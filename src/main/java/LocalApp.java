@@ -17,7 +17,6 @@ import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
-import com.amazonaws.util.Base64;
 import com.google.gson.Gson;
 import javax.jms.*;
 import java.io.*;
@@ -39,7 +38,8 @@ public class LocalApp {
     private static UUID uuid;
     private static int workersNum;
     private static int numberOfFiles;
-
+    public static  Connection connection = null;
+    public static Session session;
 
     public static void main(String[] args) throws Exception {
         init(args);
@@ -53,6 +53,20 @@ public class LocalApp {
         while (numberOfFiles > 0) {
             getOutput();
         }
+
+        List<String> l=new ArrayList<String>();
+        for (int i = 0; i <instances.size() ; i++) {
+           l.add(instances.get(i).getInstanceId());
+        }
+        TerminateInstancesRequest terminateRequest   = new TerminateInstancesRequest(l);
+        ec2.terminateInstances(terminateRequest);
+        deleteTheQueue();
+        session.close();
+        connection.close();
+        ec2.shutdown();
+        S3.shutdown();
+        System.out.println("the local app is finished "+numberOfFiles);
+        System.exit(0);
     }
 
     //initilize and creating instance
@@ -67,14 +81,13 @@ public class LocalApp {
                 .build();
         Script managerBash = new Script();
         managerBash.setManagerScript();
-        System.out.println("the script for the Manager: " + managerBash);
         instanceP=new IamInstanceProfileSpecification();
         instanceP.setArn("arn:aws:iam::504703692217:instance-profile/ManagerRole");
         if (!isActive()) {
             try {
                 request = new RunInstancesRequest("ami-32d8124a", 1, 1);
                 request.setInstanceType(InstanceType.T2Micro.toString());
-                request.withKeyName("eladKP");
+                request.withKeyName("morKP");
                 request.withSecurityGroups("mor");
                 request.withUserData(managerBash.getManagerScript());
                 request.setIamInstanceProfile(instanceP);
@@ -133,17 +146,18 @@ public class LocalApp {
         }
         numberOfFiles = arguments.size();
     }
+
     //send the num of workers
     private static void sendWorkersNumMessage() {
         WorkersNumMsg workersNumMsg = new WorkersNumMsg(workersNum,uuid);
         Gson gson = new Gson();
-        Connection connection = null;
         try {
             connection = connectionFactory.createConnection();
-            Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+            session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
             MessageProducer producer = session.createProducer(session.createQueue("AppToManager"));
             TextMessage message = session.createTextMessage(gson.toJson(workersNumMsg).toString());
             producer.send(message);
+            producer.close();
         } catch (JMSException e) {
             e.printStackTrace();
         }
@@ -223,7 +237,6 @@ public class LocalApp {
         System.out.println("===========================================");
         System.out.println("Getting Started with Amazon SQS");
         System.out.println("===========================================\n");
-        System.out.println("Creating a new SQS queue called MangerToApp.\n");
         try {
             SQSConnection connection = connectionFactory.createConnection();
             AmazonSQSMessagingClientWrapper client = connection.getWrappedAmazonSQSClient();
@@ -235,7 +248,7 @@ public class LocalApp {
             if (!client.queueExists(("AppToManager"))) {
                 client.createQueue("AppToManager");
             }
-
+            connection.close();
         } catch (JMSException e) {
             e.printStackTrace();
         }
@@ -250,10 +263,10 @@ public class LocalApp {
                         .withRegion("us-west-2")
                         .withCredentials(credentialsProvider)
         );
-        Connection connection = null;
+
         try {
             connection = connectionFactory.createConnection();
-            Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+            session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
             MessageProducer producer = session.createProducer(session.createQueue("AppToManager"));
             for (int i = 0; i < keys.size(); i++) {
                 System.out.println("Sending a " + i + "message to ApptoMamager\n");
@@ -263,9 +276,11 @@ public class LocalApp {
                 TextMessage message = session.createTextMessage(gson.toJson(urlMsg));
                 producer.send(message);
             }
+            producer.close();
         } catch (JMSException e) {
             e.printStackTrace();
         }
+
     }
 
     //get an output from the queue
@@ -273,18 +288,22 @@ public class LocalApp {
         Message message = null;
         try {
             SQSConnection connection = connectionFactory.createConnection();
-            Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+            session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
             AmazonSQSMessagingClientWrapper client = connection.getWrappedAmazonSQSClient();
             MessageConsumer consumer = session.createConsumer(session.createQueue("ManagerToApp" + uuid.toString()));
             connection.start();
             message = consumer.receive();
             OutputMsg outputMsg = new Gson().fromJson(((TextMessage) message).getText(), OutputMsg.class);
             createHTML(outputMsg);
+            connection.close();
+//            session.close();
+            consumer.close();
         } catch (JMSException e) {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
+
     }
 
     public static void createHTML(OutputMsg outputMsg) throws IOException {
@@ -299,34 +318,52 @@ public class LocalApp {
         bw.write("<body>");
         Gson gson = new Gson();
         while ((line = bufferedReader.readLine()) != null) {
-            StringBuilder builder = new StringBuilder();
             ReviewResponse reviewResponse = gson.fromJson(line, ReviewResponse.class);
-            String html=(gson.toJson(reviewResponse));
-            String color = "";
-            switch (reviewResponse.getSentiment()) {
-                case 0:
-                    color = "DarkRed";
-                    break;
-                case 1:
-                    color = "red";
-                    break;
-                case 2:
-                    color = "black";
-                    break;
-                case 3:
-                    color = "LightGreen";
-                    break;
-                case 4:
-                    color = "DarkGreen";
-                    break;
-            }
-
-            bw.write("<p style=color:"+color+">" + html + "</p>");
+            bw.write(makeHTMLLine(reviewResponse));
         }
         bw.write("</body>");
         bw.write("</html>");
         bw.close();
         numberOfFiles--;
+        System.out.println("the num of files left: "+numberOfFiles);
+    }
+
+    public static String makeHTMLLine(ReviewResponse reviewResponse){
+        String color = "";
+        switch (reviewResponse.getSentiment()) {
+            case 0:
+                color = "DarkRed";
+                break;
+            case 1:
+                color = "red";
+                break;
+            case 2:
+                color = "black";
+                break;
+            case 3:
+                color = "LightGreen";
+                break;
+            case 4:
+                color = "DarkGreen";
+                break;
+        }
+
+        StringBuilder builder = new StringBuilder();
+        builder.append("<p>");
+        builder.append("Review: ");
+        builder.append("<span style=\"color: "+color+";\">");
+        builder.append(reviewResponse.getReview().getText());
+        builder.append("</span>");
+        builder.append("<a href=\""+reviewResponse.getReview().getLink()+"\">, " + reviewResponse.getReview().getLink() + "</a>");
+        builder.append(", Named entities: " + reviewResponse.getM());
+        if (reviewResponse.isSarcasm()){
+            builder.append(", <b>This review is sarcastic</b>");
+        }else {
+            builder.append(", <b>This review is NOT sarcastic</b>");
+        }
+        builder.append("<hr size=\"10\">");
+        builder.append("<br></p>\n");
+        return builder.toString();
     }
 
     private static File getFromS3(String s) {
@@ -355,17 +392,35 @@ public class LocalApp {
     public static void Terminate() {
         TerminateMsg terminateMsg = new TerminateMsg(uuid);
         Gson gson = new Gson();
-        Connection connection = null;
         try {
             connection = connectionFactory.createConnection();
-            Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+            session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
             MessageProducer producer = session.createProducer(session.createQueue("AppToManager"));
             TextMessage message = session.createTextMessage(gson.toJson(terminateMsg));
             producer.send(message);
+            producer.close();
         } catch (JMSException e) {
             e.printStackTrace();
         }
 
+    }
+
+    private static void deleteTheQueue() {
+        connectionFactory = new SQSConnectionFactory(
+                new ProviderConfiguration(),
+                AmazonSQSClientBuilder.standard()
+                        .withRegion("us-west-2")
+                        .withCredentials(credentialsProvider)
+        );
+        try {
+            SQSConnection connection = connectionFactory.createConnection();
+            AmazonSQSMessagingClientWrapper client = connection.getWrappedAmazonSQSClient();
+            client.getAmazonSQSClient().deleteQueue("ManagerToApp"+uuid);
+            connection.close();
+
+        } catch (JMSException e) {
+            e.printStackTrace();
+        }
     }
 }
 

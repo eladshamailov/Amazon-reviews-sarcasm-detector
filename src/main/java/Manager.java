@@ -11,7 +11,8 @@ import com.amazonaws.auth.InstanceProfileCredentialsProvider;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
-import com.amazonaws.services.ec2.model.IamInstanceProfileSpecification;
+import com.amazonaws.services.ec2.model.*;
+import com.amazonaws.services.gamelift.model.DescribeInstancesRequest;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
@@ -21,6 +22,9 @@ import com.google.gson.Gson;
 
 import javax.jms.*;
 import java.io.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.*;
 
 import java.util.UUID;
@@ -42,6 +46,8 @@ public class Manager {
     public static ConcurrentLinkedQueue<Message> queue = new ConcurrentLinkedQueue<>();
     public static int numActiveWorker = 0;
     public static int jobs=0;
+    public static String listOfin;
+    public static List<Instance> instances;
 
     public static void main(String[] args) throws InterruptedException {
         initialize();
@@ -69,51 +75,48 @@ public class Manager {
             t1.interrupt();
             t2.interrupt();
             executorService.shutdownNow();
-        //    deleteTheQueue();
+         //   deleteTheQueue();
+        System.out.println("the manager finish");
+
     }
 
     private static void terminateAllWorkers() {
-        SQSConnectionFactory connectionFactory = new SQSConnectionFactory(
-                new ProviderConfiguration(),
-                AmazonSQSClientBuilder.standard()
-                        .withRegion("us-west-2")
-                        .withCredentials(credentialsProvider)
-        );
-        Connection connection = null;
-        try {
-            Gson gson = new Gson();
-            connection = connectionFactory.createConnection();
-            Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-            MessageProducer producer = session.createProducer(session.createQueue("ManagerToWorker"));
-            TerminateMsg terminateMsg = new TerminateMsg(uuid);
-            for (int i = 0; i < numActiveWorker; i++) {
-                TextMessage message = session.createTextMessage(gson.toJson(terminateMsg).toString());
-                producer.send(message);
+        DescribeInstancesRequest dis = new DescribeInstancesRequest();
+        listOfin = dis.getInstanceId();
+        DescribeInstancesResult disresult = ec2.describeInstances();
+        List<Reservation> list = disresult.getReservations();
+        System.out.println("-------------- terminate all active workers -------------");
+        List<String> l=new ArrayList<String>();
+        if (list.size() > 0) {
+            for (Reservation res : list) {
+                List<Instance> instancelist = res.getInstances();
+                for (Instance instance : instancelist) {
+                    if (instance.getState().getName().equals("running")) {
+                        l.add(instance.getInstanceId());
+                    }
+                }
             }
-            session.close();
-            connection.close();
-
-        } catch (JMSException e) {
-            e.printStackTrace();
         }
+            TerminateInstancesRequest terminateRequest   = new TerminateInstancesRequest(l);
+            ec2.terminateInstances(terminateRequest);
     }
 
-    private static void deleteTheQueue() {
-        connectionFactory = new SQSConnectionFactory(
-                new ProviderConfiguration(),
-                AmazonSQSClientBuilder.standard()
-                        .withRegion("us-west-2")
-                        .withCredentials(Manager.credentialsProvider)
-        );
-        try {
-            SQSConnection connection = connectionFactory.createConnection();
-            AmazonSQSMessagingClientWrapper client = connection.getWrappedAmazonSQSClient();
-            client.getAmazonSQSClient().deleteQueue("ManagerToWorker");
-            client.getAmazonSQSClient().deleteQueue("WorkerToManager");
-        } catch (JMSException e) {
-            e.printStackTrace();
-        }
-    }
+//    private static void deleteTheQueue() {
+//        connectionFactory = new SQSConnectionFactory(
+//                new ProviderConfiguration(),
+//                AmazonSQSClientBuilder.standard()
+//                        .withRegion("us-west-2")
+//                        .withCredentials(Manager.credentialsProvider)
+//        );
+//        try {
+//            SQSConnection connection = connectionFactory.createConnection();
+//            AmazonSQSMessagingClientWrapper client = connection.getWrappedAmazonSQSClient();
+//            client.getAmazonSQSClient().deleteQueue("ManagerToWorker");
+//            client.getAmazonSQSClient().deleteQueue("WorkerToManager");
+//        } catch (JMSException e) {
+//            e.printStackTrace();
+//        }
+//    }
 
     private static void work() {
         System.out.println("\n run in work \n");
@@ -145,10 +148,11 @@ public class Manager {
 
     //creating a connection to the ec2 and the sqs
     public static void initialize() {
-//        credentialsProvider = new AWSStaticCredentialsProvider
-//                (new InstanceProfileCredentialsProvider(false).getCredentials());
         credentialsProvider = new AWSStaticCredentialsProvider
-                (new ProfileCredentialsProvider().getCredentials());          //to run local
+                (new InstanceProfileCredentialsProvider(false).getCredentials());
+
+//        credentialsProvider = new AWSStaticCredentialsProvider
+//                (new ProfileCredentialsProvider().getCredentials());          //to run local
 
         System.out.println("===========================================");
         System.out.println("connect to aws & ec2");

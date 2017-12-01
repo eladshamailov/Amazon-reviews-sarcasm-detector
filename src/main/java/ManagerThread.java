@@ -197,27 +197,26 @@ public class ManagerThread implements Runnable {
         System.out.println("num of n:"+Manager.numWorker);
             if (Manager.numActiveWorker == 0 || (Manager.jobs - Manager.numActiveWorker) >= Manager.numWorker.get()) {
                 int x = (( Manager.jobs/Manager.numWorker.get())- Manager.numActiveWorker);
-                System.out.println("the num of workers that we need to create: "+x);
                 if(x>20){
                     x=19;
                 }
+
                 for (int i = 0; i < x; i++) {
-                    Manager.numActiveWorker--;
+                    Manager.numActiveWorker++;
                     AmazonEC2 ec2 = AmazonEC2ClientBuilder.standard()
                             .withCredentials(Manager.credentialsProvider)
                             .withRegion("us-west-2")
                             .build();
                     Script workersBash = new Script();
                     workersBash.setWorkersScript();
-                    System.out.println("the script for the worker: " + workersBash);
                         try {
                             RunInstancesRequest  request = new RunInstancesRequest("ami-bf4193c7", 1, 1);
-                            request.setInstanceType(InstanceType.T2Micro.toString());
-                            request.withKeyName("eladKP");
+                            request.setInstanceType(InstanceType.T2Medium.toString());
+                            request.withKeyName("morKP");
                             request.withSecurityGroups("mor");
                             request.withUserData(workersBash.getWorkersScript());
                             request.setIamInstanceProfile(Manager.instanceP);
-                            ec2.runInstances(request);
+                            Manager.instances= ec2.runInstances(request).getReservation().getInstances();
 
                         } catch (AmazonServiceException ase) {
                             System.out.println("Caught Exception: " + ase.getMessage());

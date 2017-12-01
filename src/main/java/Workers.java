@@ -31,12 +31,12 @@ public class Workers {
         while(!terminate) {
             getMsg();
         }
-        try {
-            session.close();
-            connection.close();
-        } catch (JMSException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            session.close();
+//            connection.close();
+//        } catch (JMSException e) {
+//            e.printStackTrace();
+//        }
 
     }
     public static void initialize() {
@@ -79,7 +79,7 @@ public class Workers {
             Message message;
             message = consumer.receive();
             workOnMsg(message);
-           // deleteMess(message);
+
 
             } catch (JMSException e) {
             e.printStackTrace();
@@ -101,11 +101,12 @@ public class Workers {
                   ArrayList<String> a = namedEntityRecognition.printEntities(reviews.get(i).getText());
                   reviews.get(i).setFileName(fileName);
                   ReviewResponse reviewResponse = new ReviewResponse
-                          (reviews.get(i), a, reviewGrade, Math.abs(reviews.get(i).getRating() - reviewGrade) > 2);
+                          (reviews.get(i), a, reviewGrade, (reviewGrade- reviews.get(i).getRating() > 2));
                   sendMessage(reviewResponse);
               }
           }
           else {
+              System.out.println("un known msg- doing nothing");
               terminate=true;
           }
           message.acknowledge();

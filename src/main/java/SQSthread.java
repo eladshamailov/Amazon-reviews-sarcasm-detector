@@ -20,10 +20,10 @@ public class SQSthread implements Runnable {
     @Override
     public void run() {
         System.out.println("\n is run sqs t \n");
-//        Manager.credentialsProvider = new AWSStaticCredentialsProvider
-//                (new InstanceProfileCredentialsProvider(false).getCredentials());
         Manager.credentialsProvider = new AWSStaticCredentialsProvider
-                (new ProfileCredentialsProvider().getCredentials());      //to run local
+                (new InstanceProfileCredentialsProvider(false).getCredentials());
+//        Manager.credentialsProvider = new AWSStaticCredentialsProvider
+//                (new ProfileCredentialsProvider().getCredentials());      //to run local
 
         Manager.connectionFactory = new SQSConnectionFactory(
                 new ProviderConfiguration(),
