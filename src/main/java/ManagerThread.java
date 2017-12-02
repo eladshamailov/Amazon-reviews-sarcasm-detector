@@ -170,31 +170,33 @@ public class ManagerThread implements Runnable {
         );
         System.out.println("the num of jobs: "+Manager.jobs);
         System.out.println("the num of active workers: "+Manager.numActiveWorker);
-        if(Manager.numActiveWorker<19) {
-            if (Manager.numActiveWorker == 0 || (Manager.jobs - Manager.numActiveWorker) >= Manager.numWorker.get()) {
-                int x = ((Manager.jobs / Manager.numWorker.get()) - Manager.numActiveWorker);
-                System.out.println("the num of workers that we need to create:: " + x);
-                for (int i = 0; i < x; i++) {
-                    AmazonEC2 ec2 = AmazonEC2ClientBuilder.standard()
-                            .withCredentials(Manager.credentialsProvider)
-                            .withRegion("us-west-2")
-                            .build();
-                    Script workersBash = new Script();
-                    workersBash.setWorkersScript();
-                    try {
-                        RunInstancesRequest request = new RunInstancesRequest("ami-bf4193c7", 1, 1);
-                        request.setInstanceType(InstanceType.T2Medium.toString());
-                        request.withKeyName("morKP");
-                        request.withSecurityGroups("mor");
-                        request.withUserData(workersBash.getWorkersScript());
-                        request.setIamInstanceProfile(Manager.instanceP);
-                        Manager.instances = ec2.runInstances(request).getReservation().getInstances();
-                        Manager.numActiveWorker++;
-                    } catch (AmazonServiceException ase) {
-                        System.out.println("Caught Exception: " + ase.getMessage());
-                        System.out.println("Reponse Status Code: " + ase.getStatusCode());
-                        System.out.println("Error Code: " + ase.getErrorCode());
-                        System.out.println("Request ID: " + ase.getRequestId());
+        synchronized (Manager.numActiveWorker) {
+            int x = ((Manager.jobs / Manager.numWorker.get()) - Manager.numActiveWorker);
+            if (Manager.numActiveWorker < 19&&x>0) {
+                if (Manager.numActiveWorker == 0 || (Manager.jobs - Manager.numActiveWorker) >= Manager.numWorker.get()) {
+                    System.out.println("the num of workers that we need to create:: " + x);
+                    for (int i = 0; i < x; i++) {
+                        AmazonEC2 ec2 = AmazonEC2ClientBuilder.standard()
+                                .withCredentials(Manager.credentialsProvider)
+                                .withRegion("us-west-2")
+                                .build();
+                        Script workersBash = new Script();
+                        workersBash.setWorkersScript();
+                        try {
+                            RunInstancesRequest request = new RunInstancesRequest("ami-bf4193c7", 1, 1);
+                            request.setInstanceType(InstanceType.T2Medium.toString());
+                            request.withKeyName("morKP");
+                            request.withSecurityGroups("mor");
+                            request.withUserData(workersBash.getWorkersScript());
+                            request.setIamInstanceProfile(Manager.instanceP);
+                            Manager.instances = ec2.runInstances(request).getReservation().getInstances();
+                            Manager.numActiveWorker++;
+                        } catch (AmazonServiceException ase) {
+                            System.out.println("Caught Exception: " + ase.getMessage());
+                            System.out.println("Reponse Status Code: " + ase.getStatusCode());
+                            System.out.println("Error Code: " + ase.getErrorCode());
+                            System.out.println("Request ID: " + ase.getRequestId());
+                        }
                     }
                 }
             }
