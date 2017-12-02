@@ -180,51 +180,37 @@ public class ManagerThread implements Runnable {
                         .withRegion("us-west-2")
                         .withCredentials(Manager.credentialsProvider)
         );
-//        SQSConnection connection = null;
-//        try {
-//            connection = Manager.connectionFactory.createConnection();
-//            AmazonSQSMessagingClientWrapper client = connection.getWrappedAmazonSQSClient();
-//            GetQueueAttributesRequest attReq = new GetQueueAttributesRequest();
-//            attReq.setQueueUrl("ManagerToWorker");
-//            ArrayList<String> attr = new ArrayList<>();
-//            attr.add("ApproximateNumberOfMessages");
-//            attReq.setAttributeNames(attr);
-//            GetQueueAttributesResult response = client.getAmazonSQSClient().getQueueAttributes(attReq);
-//            String messagesNum = response.getAttributes().get("ApproximateNumberOfMessages");
-//            System.out.println("the num that has in the queue:"+messagesNum);
-            System.out.println("the num of jobs: "+Manager.jobs);
+        System.out.println("the num of jobs: "+Manager.jobs);
         System.out.println("the num of active workers: "+Manager.numActiveWorker);
         System.out.println("num of n:"+Manager.numWorker);
+        if(Manager.numActiveWorker<19) {
             if (Manager.numActiveWorker == 0 || (Manager.jobs - Manager.numActiveWorker) >= Manager.numWorker.get()) {
-                int x = (( Manager.jobs/Manager.numWorker.get())- Manager.numActiveWorker);
-                if(x>20){
-                    x=19;
-                }
-
+                int x = ((Manager.jobs / Manager.numWorker.get()) - Manager.numActiveWorker);
+                System.out.println("the x is: " + x);
                 for (int i = 0; i < x; i++) {
-                    Manager.numActiveWorker++;
                     AmazonEC2 ec2 = AmazonEC2ClientBuilder.standard()
                             .withCredentials(Manager.credentialsProvider)
                             .withRegion("us-west-2")
                             .build();
                     Script workersBash = new Script();
                     workersBash.setWorkersScript();
-                        try {
-                            RunInstancesRequest  request = new RunInstancesRequest("ami-bf4193c7", 1, 1);
-                            request.setInstanceType(InstanceType.T2Medium.toString());
-                            request.withKeyName("morKP");
-                            request.withSecurityGroups("mor");
-                            request.withUserData(workersBash.getWorkersScript());
-                            request.setIamInstanceProfile(Manager.instanceP);
-                            Manager.instances= ec2.runInstances(request).getReservation().getInstances();
-
-                        } catch (AmazonServiceException ase) {
-                            System.out.println("Caught Exception: " + ase.getMessage());
-                            System.out.println("Reponse Status Code: " + ase.getStatusCode());
-                            System.out.println("Error Code: " + ase.getErrorCode());
-                            System.out.println("Request ID: " + ase.getRequestId());
-                        }
+                    try {
+                        RunInstancesRequest request = new RunInstancesRequest("ami-bf4193c7", 1, 1);
+                        request.setInstanceType(InstanceType.T2Medium.toString());
+                        request.withKeyName("morKP");
+                        request.withSecurityGroups("mor");
+                        request.withUserData(workersBash.getWorkersScript());
+                        request.setIamInstanceProfile(Manager.instanceP);
+                        Manager.instances = ec2.runInstances(request).getReservation().getInstances();
+                        Manager.numActiveWorker++;
+                    } catch (AmazonServiceException ase) {
+                        System.out.println("Caught Exception: " + ase.getMessage());
+                        System.out.println("Reponse Status Code: " + ase.getStatusCode());
+                        System.out.println("Error Code: " + ase.getErrorCode());
+                        System.out.println("Request ID: " + ase.getRequestId());
                     }
                 }
+            }
+        }
     }
 }

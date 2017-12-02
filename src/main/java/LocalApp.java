@@ -53,14 +53,15 @@ public class LocalApp {
         while (numberOfFiles > 0) {
             getOutput();
         }
-
-        List<String> l=new ArrayList<String>();
-        for (int i = 0; i <instances.size() ; i++) {
-           l.add(instances.get(i).getInstanceId());
+        if(terminate) {
+            List<String> l = new ArrayList<String>();
+            for (int i = 0; i < instances.size(); i++) {
+                l.add(instances.get(i).getInstanceId());
+            }
+            TerminateInstancesRequest terminateRequest = new TerminateInstancesRequest(l);
+            ec2.terminateInstances(terminateRequest);
+            deleteTheQueue();
         }
-        TerminateInstancesRequest terminateRequest   = new TerminateInstancesRequest(l);
-        ec2.terminateInstances(terminateRequest);
-        deleteTheQueue();
         session.close();
         connection.close();
         ec2.shutdown();

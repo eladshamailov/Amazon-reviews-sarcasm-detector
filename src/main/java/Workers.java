@@ -25,7 +25,7 @@ public class Workers {
     public static NamedEntityRecognition namedEntityRecognition;
     public static SQSConnection connection;
     public static Session session;
-
+    public static int messagesCount=0;
     public static void main(String [] args){
         initialize();
         while(!terminate) {
@@ -131,7 +131,8 @@ public class Workers {
             MessageProducer producer = session.createProducer(session.createQueue("WorkerToManager"));
             TextMessage message = session.createTextMessage(gson.toJson(reviewResponse).toString());
             producer.send(message);
-            System.out.println("send a msg to worker to manager sqs");
+            messagesCount++;
+            System.out.println("it was mine: "+messagesCount+" message");
 
         } catch (JMSException e) {
             e.printStackTrace();

@@ -86,7 +86,6 @@ public class WorkerThread implements Runnable {
                 bw.close();
                 if (Manager.files.get(spilted[1]) == 0) {
                     Manager.UpToS3(fileName);
-                 //   OutputMsg outputMsg=new OutputMsg(spilted[1]+"1");
                 }
 
             }
