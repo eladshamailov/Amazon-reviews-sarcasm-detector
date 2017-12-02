@@ -22,7 +22,6 @@ public class WorkerThread implements Runnable {
     public Session session;
 
     public void run() {
-        System.out.println("in worker thread");
         Manager.credentialsProvider = new AWSStaticCredentialsProvider
                 (new InstanceProfileCredentialsProvider(false).getCredentials());
 
@@ -44,7 +43,7 @@ public class WorkerThread implements Runnable {
             Message message;
             while (true) {
                 while ((message = consumer.receive()) == null) {
-                    System.out.println("There is no new msg");
+                    System.out.println("There is no new message");
                     Thread.sleep(1000);
                     if (Thread.interrupted()) {
                         return;

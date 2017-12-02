@@ -58,11 +58,11 @@ public class Manager {
         Runnable sqsthread = new SQSthread();
         Thread t1 = new Thread(sqsthread , "SqsThread");
         t1.start();
-        System.out.println("\n run t1 \n");
+        System.out.println("\n run t1- the SQSThread \n");
         Runnable WorkerTread = new WorkerThread();
         Thread t2 = new Thread(WorkerTread , "workThread");
         t2.start();
-        System.out.println("\n run t2 \n");
+        System.out.println("\n run t2- the Worker thread  \n");
         work();
         while(!isTerminate) {
             try {
@@ -101,26 +101,7 @@ public class Manager {
             ec2.terminateInstances(terminateRequest);
     }
 
-//    private static void deleteTheQueue() {
-//        connectionFactory = new SQSConnectionFactory(
-//                new ProviderConfiguration(),
-//                AmazonSQSClientBuilder.standard()
-//                        .withRegion("us-west-2")
-//                        .withCredentials(Manager.credentialsProvider)
-//        );
-//        try {
-//            SQSConnection connection = connectionFactory.createConnection();
-//            AmazonSQSMessagingClientWrapper client = connection.getWrappedAmazonSQSClient();
-//            client.getAmazonSQSClient().deleteQueue("ManagerToWorker");
-//            client.getAmazonSQSClient().deleteQueue("WorkerToManager");
-//        } catch (JMSException e) {
-//            e.printStackTrace();
-//        }
-//    }
-
     private static void work() {
-        System.out.println("\n run in work \n");
-        //Liad - added Q size > 0
         while (!terminate || !files.isEmpty() || queue.size() > 0) {
             int k = 0;
             if (queue.size() > 100) {
@@ -143,8 +124,6 @@ public class Manager {
         isTerminate=true;
 
     }
-
-
 
     //creating a connection to the ec2 and the sqs
     public static void initialize() {
@@ -201,7 +180,7 @@ public class Manager {
 
     public static void UpToS3(String fileName) {
         try {
-            System.out.println("up the file to s3");
+            System.out.println("upload the files to s3");
             Connection connection = null;
             connection = connectionFactory.createConnection();
             Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);

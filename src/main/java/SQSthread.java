@@ -19,7 +19,6 @@ public class SQSthread implements Runnable {
 
     @Override
     public void run() {
-        System.out.println("\n is run sqs t \n");
         Manager.credentialsProvider = new AWSStaticCredentialsProvider
                 (new InstanceProfileCredentialsProvider(false).getCredentials());
 //        Manager.credentialsProvider = new AWSStaticCredentialsProvider
@@ -40,14 +39,13 @@ public class SQSthread implements Runnable {
             Message message;
                while (true) {
                    while ((message = consumer.receive()) == null) {
-                       System.out.println("There is no new msg");
+                       System.out.println("There is no new msg in the app-manager thread");
                        Thread.sleep(1000);
                        if (Thread.interrupted()) {
                            return;
                        }
                    }
                    Manager.queue.add(message);
-                   System.out.println("added message to Q yay!");
                }
         } catch (JMSException e) {
             e.printStackTrace();

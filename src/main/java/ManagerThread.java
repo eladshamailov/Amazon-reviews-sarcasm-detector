@@ -44,7 +44,6 @@ public class ManagerThread implements Runnable {
             Gson gson = new Gson();
             Message queueMessage = Manager.queue.poll();
             if (queueMessage != null) {
-                System.out.println("got message from C Q " + Thread.currentThread().getName());
                 String text = (((TextMessage) queueMessage).getText());
                 System.out.println("message text: " + Thread.currentThread().getName() + " " + text);
                 Msg msg = gson.fromJson(text, Msg.class);
@@ -73,7 +72,6 @@ public class ManagerThread implements Runnable {
 
     private void handleMassage(Msg msg, String text) {
         Gson gson = new Gson();
-        System.out.println(" in handle msg, msg action: " + msg.getAction());
         switch (msg.getAction()) {
             //terminate
             case 0:
@@ -81,13 +79,10 @@ public class ManagerThread implements Runnable {
                 break;
             // URL
             case 1:
-                System.out.println("in case 1 with msg: " + msg.getUuid());
                 UrlMsg urlMsg = gson.fromJson(text, UrlMsg.class);
                 Manager.files.put(urlMsg.getKey(), 0);
-                System.out.println("files size = " + Manager.files.size());
                 parseFromS3(urlMsg);
                 break;
-            //WorkerMsg
             case 4:
                 WorkersNumMsg workerMsg = gson.fromJson(text, WorkersNumMsg.class);
                 if (workerMsg.getNum() > Manager.numWorker.get()) {
@@ -98,7 +93,6 @@ public class ManagerThread implements Runnable {
     }
 
     private void parseFromS3(UrlMsg urlMsg) {
-        System.out.println("in parse from s3 with msg: " + urlMsg.uuid + "Thread :" + Thread.currentThread().getName());
         File file = new File("MNGR"+urlMsg.getKey());
         String bucketName1 = urlMsg.bucketName;
         String key1 = urlMsg.key;
@@ -127,7 +121,6 @@ public class ManagerThread implements Runnable {
     }
 
     public static void parse(File file, UrlMsg url) {
-        System.out.println("in parse with msg:" + url.uuid);
         Gson gson = new Gson();
         BufferedReader reader = null;
         Manager.connectionFactory = new SQSConnectionFactory(
@@ -143,7 +136,6 @@ public class ManagerThread implements Runnable {
             MessageProducer producer = session.createProducer(session.createQueue("ManagerToWorker"));
             reader = new BufferedReader(new FileReader(file));
             String line = reader.readLine();
-//            System.out.println(line +"\n");
             while (line != null) {
                 ReviewMsg reviewMsg = gson.fromJson(line, ReviewMsg.class);
                 reviewMsg.setFileName(url.toString());
@@ -152,15 +144,11 @@ public class ManagerThread implements Runnable {
                 producer.send(message);
                 int x= reviewMsg.getReviews().size();
                 synchronized (Manager.files) {
-                    System.out.println("the counter when i send msg: "+ (Manager.files.get(url.getKey()) + 1));
                     Manager.files.put(url.getKey(), Manager.files.get(url.getKey()) +x );
                     Manager.jobs=Manager.jobs+1;
-                    System.out.println("the num of jobs: "+Manager.jobs);
-
                 }
                 createWorkers();
                 line = reader.readLine();
-//                System.out.println(line +"\n");
             }
             session.close();
             connection.close();
@@ -182,11 +170,10 @@ public class ManagerThread implements Runnable {
         );
         System.out.println("the num of jobs: "+Manager.jobs);
         System.out.println("the num of active workers: "+Manager.numActiveWorker);
-        System.out.println("num of n:"+Manager.numWorker);
         if(Manager.numActiveWorker<19) {
             if (Manager.numActiveWorker == 0 || (Manager.jobs - Manager.numActiveWorker) >= Manager.numWorker.get()) {
                 int x = ((Manager.jobs / Manager.numWorker.get()) - Manager.numActiveWorker);
-                System.out.println("the x is: " + x);
+                System.out.println("the num of workers that we need to create:: " + x);
                 for (int i = 0; i < x; i++) {
                     AmazonEC2 ec2 = AmazonEC2ClientBuilder.standard()
                             .withCredentials(Manager.credentialsProvider)
