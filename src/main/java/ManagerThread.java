@@ -226,8 +226,5 @@ public class ManagerThread implements Runnable {
                         }
                     }
                 }
-//        } catch (JMSException e) {
-//            e.printStackTrace();
-//        }
     }
 }
