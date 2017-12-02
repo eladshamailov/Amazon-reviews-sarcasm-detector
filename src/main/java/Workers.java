@@ -101,7 +101,7 @@ public class Workers {
                   ArrayList<String> a = namedEntityRecognition.printEntities(reviews.get(i).getText());
                   reviews.get(i).setFileName(fileName);
                   ReviewResponse reviewResponse = new ReviewResponse
-                          (reviews.get(i), a, reviewGrade, (reviewGrade- reviews.get(i).getRating() > 2));
+                          (reviews.get(i), a, reviewGrade, (reviewGrade- reviews.get(i).getRating() >= 2));
                   sendMessage(reviewResponse);
               }
           }
