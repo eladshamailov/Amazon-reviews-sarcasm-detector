@@ -169,7 +169,9 @@ Moreover if more than 1 app will try to create the manager, it will not succeed,
 it will get a message that say :" the manager is already active".
 
 **Question:** Are all your workers working hard? Or some are slacking? Why?
-**Answer:**  @TODO: answer the question**
+**Answer:**  No. not all the workers work the same, some of them works on a big amount of messages and some of them works on less.
+We think it's because the workers are not created at the same time, the first worker works alone until the 29 message.
+Because of that those who are created first works harder.
 
 **Question:** Is your manager doing more work than he's supposed to? Have you made sure each part of your system has properly defined tasks? Did you mix their tasks? Don't!
 **Answer:**The manager is responsible to:
