@@ -18,6 +18,7 @@ import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
+import com.amazonaws.services.sqs.model.DeleteMessageRequest;
 import com.google.gson.Gson;
 
 import javax.jms.*;
@@ -44,7 +45,7 @@ public class Manager {
     public  static IamInstanceProfileSpecification instanceP;
     public static AtomicInteger numWorker = new AtomicInteger(0);
     public static ConcurrentLinkedQueue<Message> queue = new ConcurrentLinkedQueue<>();
-    public static int numActiveWorker = 0;
+    public static Integer numActiveWorker = 0;
     public static int jobs=0;
     public static String listOfin;
     public static List<Instance> instances;
@@ -75,9 +76,28 @@ public class Manager {
             t1.interrupt();
             t2.interrupt();
             executorService.shutdownNow();
-         //   deleteTheQueue();
+            deleteTheQueue();
         System.out.println("the manager finish");
+    }
 
+    private static void deleteTheQueue() {
+        connectionFactory = new SQSConnectionFactory(
+                new ProviderConfiguration(),
+                AmazonSQSClientBuilder.standard()
+                        .withRegion("us-west-2")
+                        .withCredentials(Manager.credentialsProvider)
+        );
+        try {
+            SQSConnection connection = connectionFactory.createConnection();
+            AmazonSQSMessagingClientWrapper client = connection.getWrappedAmazonSQSClient();
+            DeleteMessageRequest deleteMessageRequest=new DeleteMessageRequest();
+            client.deleteMessage(deleteMessageRequest);
+            client.getAmazonSQSClient().deleteQueue("ManagerToWorker");
+            client.getAmazonSQSClient().deleteQueue("WorkerToManager");
+            connection.close();
+        } catch (JMSException e) {
+            e.printStackTrace();
+        }
     }
 
     private static void terminateAllWorkers() {
