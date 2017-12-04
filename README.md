@@ -152,7 +152,7 @@ This way when the manager gets a terminate message he knows to which local app h
 
 **Question:** Do you understand how the system works? Do a full run using pen and paper, draw the different parts and the communication that happens between them.
 **Answer:**  yes, we do understand how the system works. Attached a pic of the communication between all the parts.
-![work flow](workflow.jpg)
+![work flow](programflow.jpg)
 
 
 **Question:** Did you manage the termination process? Be sure all is closed once requested!
