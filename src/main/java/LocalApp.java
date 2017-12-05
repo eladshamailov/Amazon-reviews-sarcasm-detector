@@ -44,7 +44,7 @@ public class LocalApp {
     public static void main(String[] args) throws Exception {
         init(args);
         startS3("C:\\Users\\Mor\\IdeaProjects\\Assignment1");
-        UpToS3("C:/Users/Mor/IdeaProjects/docs");
+        UpToS3("../docs");
         createQueue();
         if (terminate)
             Terminate();
@@ -60,14 +60,33 @@ public class LocalApp {
             }
             TerminateInstancesRequest terminateRequest = new TerminateInstancesRequest(l);
             ec2.terminateInstances(terminateRequest);
-            deleteTheQueue();
+            closeAll();
         }
+        deleteTheQueue();
         session.close();
         connection.close();
         ec2.shutdown();
         S3.shutdown();
         System.out.println("the local app is finished "+numberOfFiles);
         System.exit(0);
+    }
+
+    private static void closeAll() {
+        connectionFactory = new SQSConnectionFactory(
+                new ProviderConfiguration(),
+                AmazonSQSClientBuilder.standard()
+                        .withRegion("us-west-2")
+                        .withCredentials(credentialsProvider)
+        );
+        try {
+            SQSConnection connection = connectionFactory.createConnection();
+            AmazonSQSMessagingClientWrapper client = connection.getWrappedAmazonSQSClient();
+            client.getAmazonSQSClient().deleteQueue("AppToManager");
+            connection.close();
+
+        } catch (JMSException e) {
+            System.out.println("all the queue deleted");
+        }
     }
 
     //initilize and creating instance

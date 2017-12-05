@@ -132,7 +132,7 @@ public class Workers {
             TextMessage message = session.createTextMessage(gson.toJson(reviewResponse).toString());
             producer.send(message);
             messagesCount++;
-            System.out.println("it was mine: "+messagesCount+" message");
+            System.out.println("it was my: "+messagesCount+" message");
 
         } catch (JMSException e) {
             e.printStackTrace();

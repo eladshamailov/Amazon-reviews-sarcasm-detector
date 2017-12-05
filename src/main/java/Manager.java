@@ -77,8 +77,9 @@ public class Manager {
             t2.interrupt();
             executorService.shutdownNow();
             deleteTheQueue();
-        System.out.println("the manager finish");
+             System.out.println("the manager finish");
     }
+
 
     private static void deleteTheQueue() {
         connectionFactory = new SQSConnectionFactory(
@@ -90,13 +91,11 @@ public class Manager {
         try {
             SQSConnection connection = connectionFactory.createConnection();
             AmazonSQSMessagingClientWrapper client = connection.getWrappedAmazonSQSClient();
-            DeleteMessageRequest deleteMessageRequest=new DeleteMessageRequest();
-            client.deleteMessage(deleteMessageRequest);
             client.getAmazonSQSClient().deleteQueue("ManagerToWorker");
             client.getAmazonSQSClient().deleteQueue("WorkerToManager");
             connection.close();
         } catch (JMSException e) {
-            e.printStackTrace();
+            System.out.println("delete all the queues");
         }
     }
 
