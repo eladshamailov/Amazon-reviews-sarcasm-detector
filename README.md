@@ -1,4 +1,4 @@
-# Assignment1
+# Amazon reviews sarcasm detector
 In this assignment we implemented a real-world application that distributively processes a list of amazon reviews,
 performs sentiment analysis and named entity recognition,and displays the result on a web page.
 
