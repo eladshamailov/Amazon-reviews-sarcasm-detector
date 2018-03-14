@@ -4,10 +4,10 @@ performs sentiment analysis and named entity recognition,and displays the result
 
 ## Team
 We are two students and we implemented the project together.
-Our names and ids:
+Our names:
 
-Elad Shamailov 308540202
-Mor Bitan 305537383
+Elad Shamailov
+Mor Bitan
 
 ## Instructions 
 There are a few steps we have to follow in order to run the application smoothly.
